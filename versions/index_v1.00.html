@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trello Clone</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <div class="container-fluid">
+    <div class="row">
+
+      <div class="col-sm-12 col-md-4">
+        <div class="card">
+          <div class="card-header">
+            <h2>Coluna 1</h2>
+          </div>
+
+          <div class="card-body" ondrop="drop(event)" ondragover="allowDrop(event)">
+            <div class="card" draggable="true" ondragstart="drag(event)">
+              <div class="card-body">
+                <h5 class="card-title">Título do cartão</h5>
+                <a id="editar-cartao" href="#" class="btn btn-primary card-editar">Editar</a>
+                <a id="deletar-cartao" href="#" class="btn btn-primary card-remover">Delete</a>
+              </div>
+            </div>
+          </div>
+
+
+
+
+          <div class="card-body" ondrop="drop(event)" ondragover="allowDrop(event)">
+            <div class="card" draggable="true" ondragstart="drag(event)">
+              <div class="card-body">
+                <h5 class="card-title">Título2 do cartão</h5>
+                <a id="editar-cartao" href="#" class="btn btn-primary card-editar">Editar</a>
+                <a id="deletar-cartao" href="#" class="btn btn-primary card-remover">Delete</a>
+              </div>
+            </div>
+          </div>
+
+
+          <div class="card-footer">
+            <button class="btn btn-primary" onclick="adicionarCartao(this)">Adicionar cartão</button>
+          </div>
+        </div>
+      </div>
+
+
+      <div class="col-sm-12 col-md-4">
+        <div class="card">
+          <div class="card-header">
+            <h2>Coluna 2</h2>
+          </div>
+          <div class="card-body" ondrop="drop(event)" ondragover="allowDrop(event)">
+          </div>
+          <div class="card-footer">
+            <button class="btn btn-primary" onclick="adicionarCartao(this)">Adicionar cartão</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-sm-12 col-md-4">
+        <div class="card">
+          <div class="card-header">
+            <h2>Coluna 3</h2>
+          </div>
+          <div class="card-body" ondrop="drop(event)" ondragover="allowDrop(event)">
+          </div>
+          <div class="card-footer">
+            <button class="btn btn-primary" onclick="adicionarCartao(this)">Adicionar cartão</button>
+          </div>
+        </div>
+      </div>
+
+
+    </div>
+  </div>
+
+  <script>
+    function drag(event) {
+      event.dataTransfer.setData("text", event.target.id);
+    }
+
+    function allowDrop(event) {
+      event.preventDefault();
+    }
+
+    function drop(event) {
+      event.preventDefault();
+      const data = event.dataTransfer.getData("text");
+      const card = document.getElementById(data);
+      const coluna = event.target;
+      coluna.appendChild(card);
+    }
+  </script>
+
+
+  <script>
+    function adicionarCartao(botao) {
+      const coluna = botao.parentNode.parentNode;
+      const cardBody = coluna.querySelector('.card-body');
+      const tituloCartao = prompt('Digite o título do cartão:');
+      if (tituloCartao) {
+        const novoCartao = document.createElement('div');
+        novoCartao.className = 'card';
+        novoCartao.innerHTML = `
+          <div class="card-body" ondrop="drop(event)" ondragover="allowDrop(event)">
+          <div class="card" draggable="true" ondragstart="drag(event)">
+            <div class="card-body">
+              <h5 class="card-title">${tituloCartao}</h5>
+            </div>
+          </div>
+        </div>
+    `;
+        cardBody.appendChild(novoCartao);
+        salvarCartoes();
+      }
+    }
+
+  </script>
+
+
+  <script>
+
+    function salvarCartoes() {
+      const colunas = document.querySelectorAll('.card-body');
+      const cartoes = [];
+      colunas.forEach(coluna => {
+        const cartoesColuna = coluna.querySelectorAll('.card');
+        const cartoesColunaArray = Array.from(cartoesColuna);
+        cartoes.push(cartoesColunaArray.map(cartao => cartao.innerHTML));
+      });
+      localStorage.setItem('cartoes', JSON.stringify(cartoes));
+    }
+  </script>
+
+  <script>
+    function carregarCartoes() {
+      const cartoes = JSON.parse(localStorage.getItem('cartoes'));
+      if (cartoes) {
+        const colunas = document.querySelectorAll('.card-body');
+        colunas.forEach((coluna, i) => {
+          const cartoesColuna = cartoes[i];
+          cartoesColuna.forEach(cartao => {
+            const novoCartao = document.createElement('div');
+            novoCartao.className = 'card';
+            novoCartao.innerHTML = cartao;
+            coluna.appendChild(novoCartao);
+          });
+        });
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', carregarCartoes);
+  </script>
+
+
+
+  <script>
+    let cartaoArrastado = null;
+
+    document.addEventListener('dragstart', event => {
+      if (event.target.classList.contains('card')) {
+        cartaoArrastado = event.target;
+        setTimeout(() => cartaoArrastado.classList.add('invisible'), 0);
+      }
+    });
+
+    document.addEventListener('dragend', event => {
+      if (event.target.classList.contains('card')) {
+        event.target.classList.remove('invisible');
+        cartaoArrastado = null;
+        salvarCartoes();
+      }
+    });
+
+    document.addEventListener('dragover', event => {
+      event.preventDefault();
+      if (event.target.classList.contains('card-body')) {
+        const coluna = event.target;
+        const cartoesColuna = coluna.querySelectorAll('.card:not(.invisible)');
+        const cartaoAnterior = cartoesColuna[cartoesColuna.length - 1];
+        if (cartaoAnterior) {
+          const limiteInferior = cartaoAnterior.getBoundingClientRect().bottom;
+          if (event.clientY > limiteInferior) {
+            cartaoAnterior.after(cartaoArrastado);
+            salvarCartoes();
+          }
+        } else {
+          coluna.prepend(cartaoArrastado);
+          salvarCartoes();
+        }
+      }
+    });
+  </script>
+
+
+  <script>
+    const botaoDeletar = document.getElementById('deletar-cartao');
+    botaoDeletar.addEventListener('click', () => {
+      if (event.target.classList.contains('card-remover')) {
+        const resposta = confirm('Tem certeza de que deseja excluir este cartão?');
+        if (resposta) {
+          const cartao = event.target.closest('.card');
+          cartao.remove();
+          salvarCartoes();
+        }
+      }
+    });
+
+  </script>
+
+
+  <script>
+    const btnEditar = document.getElementById('editar-cartao');
+    btnEditar.addEventListener('click', () => {
+      const cartao = btnEditar.closest('.card');
+      if (btnEditar.classList.contains('card-editar')) {
+        cartao.setAttribute('contentEditable', true);
+        cartao.focus();
+        btnEditar.innerText = 'Salvar';
+        btnEditar.classList.remove('card-editar');
+        btnEditar.classList.add('card-salvar');
+      } else if (btnEditar.classList.contains('card-salvar')) {
+        cartao.setAttribute('contentEditable', false);
+        btnEditar.innerText = 'Editar';
+        btnEditar.classList.remove('card-salvar');
+        btnEditar.classList.add('card-editar');
+        salvarCartoes();
+      }
+    });
+
+  </script>
+
+
+  <script>
+    const lista = document.querySelector('.card-list');
+    Sortable.create(lista, {
+      animation: 150,
+      handle: '.card-cabecalho',
+      ghostClass: 'ghost',
+      chosenClass: 'chosen',
+      dragClass: 'drag',
+      onEnd: salvarCartoes
+    });
+  </script>
+
+
+  <script>
+    document.addEventListener('click', event => {
+      if (event.target.classList.contains('card-cor')) {
+        const cartao = event.target.closest('.card');
+        const cor = event.target.dataset.cor;
+        cartao.style.backgroundColor = cor;
+        salvarCartoes();
+      }
+    });
+  </script>
+
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.min.js"></script>
+  <script src="script.js"></script>
+</body>
+
+</html>
