@@ -88,18 +88,38 @@
 
 
 
-<body>
+<body onload="listarProjetos()" style="padding-top: 70px;">
 
-  <!-- Add a Header here -->
-  <!-- https://getbootstrap.com/docs/5.3/components/navbar/#nav -->
+  <nav class="navbar fixed-top navbar-expand-lg bg-body-tertiary">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="#">Nome_Projeto</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
+        aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          <li class="nav-item">
+            <a class="nav-link active" aria-current="page" href="#">Página Inicial</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#">Link</a>
+          </li>
 
-  <button class="btn btn-primary" onclick="criarProjeto_teste()">Criar Novo Projeto</button>
-  <button class="btn btn-primary" onclick="criarCartao_teste('')">Adicionar Coluna ao projeto</button>
+        </ul>
 
-  <div id="test_projeto">
-    <h5>TESTE_Apenas</h5>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container-fluid">
+    <button class="btn btn-primary" onclick="criarProjeto_teste()">Criar Novo Projeto</button>
+    <button class="btn btn-primary" onclick="criarCartao_teste('')">Adicionar Coluna ao projeto</button>
 
   </div>
+
+
+  <div id="test_projeto"></div>
 
   <div class="project">
     <div class="row">
@@ -220,23 +240,106 @@
 
   <script>
 
-    // https://developer.mozilla.org/en-US/docs/Web/API/DataTransfer/setData
-
-    function drag(event) {
-      event.dataTransfer.setData("text", event.target.id);
+    //Padrão para envio de Cabeçalho com FETCH
+    let headers = {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      mode: 'no-cors'
     }
 
-    function allowDrop(event) {
-      event.preventDefault();
+    // Comum a todos os REST da seleção
+    let url = 'http://localhost:8090'
+
+    // sempre que 'iniciar' a pagina os projetos serao exibidos
+    function listarProjetos() {
+      fetch(url + '/projetos', {
+        headers: headers,
+        method: 'GET',
+        redirect: 'follow',
+      })
+        .then((res) => res.json())
+        // .then((res) => console.log(res))
+        .then((res) => fetchProjetos(res))
+      // .catch((err) => console.log(err.message))
+      console.log('Chamada realizada')
     }
 
-    function drop(event) {
-      event.preventDefault();
-      const data = event.dataTransfer.getData("text");
-      const card = document.getElementById(data);
-      const coluna = event.target.closest('.card-body');
-      coluna.appendChild(card);
+    // exibe lista de projetos na pagina
+    function fetchProjetos(lista) {
+
+      let linha = ''
+
+      for (let i = 0; i < lista.object.length; i++) {
+        let nome = lista.object[i].nome
+        let autor = lista.object[i].usuario.nome
+
+        linha += `
+            implementar como sera exibido
+        `
+      }
+      let card = `
+        ${linha}  
+     `
+      projetosID.innerHTML = card
+
     }
+
+
+    // incluir nova receita
+    function incluirProjeto() {
+      const imgBase64 = img.replace("data:", "").replace(/^.+,/, "");
+
+      // Objeto a ser convertido e enviado
+      let obj = {
+        /*
+        nome: nomeReceita.value,
+        tempoPreparo: parseFloat(tempoPreparoReceita.value),
+        passos: passosReceita.value,
+        ingredientes: [],
+        imagem: imgBase64
+        */
+       nome: nomeProjeto.value
+      }
+
+      let usuario = nomeUsuarioID.value;
+      //console.log(usuario);
+
+      fetch(url + '/projetos/' + usuario, {
+        headers: headers,
+        method: 'POST',
+        body: JSON.stringify(obj),
+      })
+        .then((res) => res.json())
+        //.then((res) => res.text())
+        // .then((text) => console.log(text))
+        .catch((err) => console.log(err.message))
+
+      // document.location.reload(true)
+    }
+
+
+    /*
+      CRUD - implementar funções pra adcionar cartões aos projetos
+    */
+
+
+    // TODO: mudar o nome dessa funcao
+    function criarCartao2(titulo) {
+      const novoCartao = document.createElement('div');
+      // novoCartao.className = 'card';
+      novoCartao.innerHTML = `
+    <div class="card" draggable="true" ondragstart="drag(event)">
+      <div class="card-body">
+        <h5 class="card-title">${titulo}</h5>
+        <a href="#" class="btn btn-primary card-editar">Editar</a>
+        <a href="#" class="btn btn-primary card-remover">Delete</a>
+      </div>
+    </div>
+  `;
+      return novoCartao;
+    }
+
+
 
     function adicionarCartao(botao) {
       const coluna = botao.closest('.card').querySelector('.card-body');
@@ -251,7 +354,6 @@
     let idProjeto = 1;
     function criarProjeto_teste() {
       const inserir = document.getElementById("test_projeto");
-
 
       console.log(idProjeto)
 
@@ -310,57 +412,12 @@
 
 
 
-
-
-    let numeroDeContainers = 1; // Inicialize o número de containers com 1
-
-    function adicionarContainer() {
-      // Crie um novo ID com base no número atual de containers
-      const novoID = `container${numeroDeContainers}`;
-
-      // Crie a div do container
-      const novoContainer = document.createElement('div');
-      novoContainer.id = novoID;
-      novoContainer.className = 'container';
-
-      // Adicione o novo container ao corpo do documento
-      document.body.appendChild(novoContainer);
-
-      // Incrementa o número de containers
-      numeroDeContainers++;
-    }
-
-
-
-    function criarCartao2(titulo) {
-      const novoCartao = document.createElement('div');
-      // novoCartao.className = 'card';
-      novoCartao.innerHTML = `
-    <div class="card" draggable="true" ondragstart="drag(event)">
-      <div class="card-body">
-        <h5 class="card-title">${titulo}</h5>
-        <a href="#" class="btn btn-primary card-editar">Editar</a>
-        <a href="#" class="btn btn-primary card-remover">Delete</a>
-      </div>
-    </div>
-  `;
-      return novoCartao;
-    }
-
-
-    function adicionarColuna_old(id) {
-      //const rowElement = document.querySelector('.container'); // Seleciona a div com a classe 'container'
-      const rowElement = document.getElementById(id);
-      const novaColuna = criarColuna(); // Usa a função criarColuna() para criar uma nova coluna
-      rowElement.appendChild(novaColuna); // Adiciona a nova coluna à div com a classe 'row'
-    }
-
     function adicionarColuna(botao) {
-      // Encontre o elemento pai do botão usando closest
+      // Encontra o elemento pai do botão usando closest
       const projetoElement = botao.closest('.project');
       const idProjeto = projetoElement.id;
 
-      // Crie e adicione a coluna ao projeto correspondente
+      // Cria e adiciona a coluna ao projeto correspondente
       const novaColuna = criarColuna();
       projetoElement.querySelector('.card-body').appendChild(novaColuna);
     }
@@ -407,10 +464,6 @@
       return novoCartao;
     }
 
-
-
-
-
     // salva no armazenamento local do navegador
     function salvarCartoes() {
       const colunas = document.querySelectorAll('.card-body');
@@ -435,6 +488,24 @@
           });
         });
       }
+    }
+
+    // https://developer.mozilla.org/en-US/docs/Web/API/DataTransfer/setData
+
+    function drag(event) {
+      event.dataTransfer.setData("text", event.target.id);
+    }
+
+    function allowDrop(event) {
+      event.preventDefault();
+    }
+
+    function drop(event) {
+      event.preventDefault();
+      const data = event.dataTransfer.getData("text");
+      const card = document.getElementById(data);
+      const coluna = event.target.closest('.card-body');
+      coluna.appendChild(card);
     }
 
     document.addEventListener('DOMContentLoaded', carregarCartoes);
