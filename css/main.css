@@ -1,0 +1,74 @@
+body {
+  overflow-x: scroll;
+  /* Adiciona uma barra de rolagem horizontal */
+  white-space: nowrap;
+  /* Impede que os itens se quebrem em várias linhas */
+}
+
+.item {
+  display: inline-block;
+  /* Faz com que os itens fiquem um ao lado do outro */
+  /*width: 300px;  Largura do item 
+    height: 300px;  Altura do item */
+  background-color: #ccc;
+  margin-right: 20px;
+  /* Espaçamento entre os itens */
+}
+
+.item:last-child {
+  margin-bottom: 20px;
+}
+
+.card-test {
+  display: inline-block;
+}
+
+.card {
+  border: 1px solid #ccc;
+  margin-bottom: 10px;
+  background-color: white;
+}
+
+.card-header {
+  background-color: #f5f5f5;
+  padding: 10px;
+}
+
+.card-body {
+  padding: 10px;
+}
+
+.card-title {
+  font-size: 1.25rem;
+  margin-bottom: 5px;
+}
+
+.btn-primary {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  background-color: #0056b3;
+}
+
+.card-footer {
+  background-color: #f5f5f5;
+  padding: 10px;
+}
+
+.container {
+  padding: 20px;
+}
+
+.project {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  align-content: flex-start;
+  height: auto;
+  min-height: 10vh;
+}
