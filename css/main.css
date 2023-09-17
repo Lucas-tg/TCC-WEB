@@ -10,7 +10,7 @@ body {
   /* Faz com que os itens fiquem um ao lado do outro */
   /*width: 300px;  Largura do item 
     height: 300px;  Altura do item */
-  background-color: #ccc;
+ /* background-color: #ccc; */
   margin-right: 20px;
   /* Espaçamento entre os itens */
 }
@@ -72,3 +72,7 @@ body {
   height: auto;
   min-height: 10vh;
 }
+
+#clicavel{
+  cursor: pointer;
+  }

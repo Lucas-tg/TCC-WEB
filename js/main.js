@@ -1,84 +1,193 @@
-//Padrão para envio de Cabeçalho com FETCH
-let headers = {
-  Accept: 'application/json',
-  'Content-Type': 'application/json',
-  mode: 'no-cors'
-}
+const stompClient = new StompJs.Client({
+  brokerURL: 'ws://localhost:8082/ws'
+});
 
-// Comum a todos os REST da seleção
-const url = 'http://localhost:8080'
+stompClient.onConnect = (frame) => {
+  setConnected(true);
+  console.log('Connected: ' + frame);
 
-// sempre que 'iniciar' a pagina os projetos serao exibidos
-function listarProjetos() {
-  fetch(url + '/workspaces/1/projects', {
-    headers: headers,
+  var requestOptions = {
     method: 'GET',
-    redirect: 'follow',
-  })
-    .then((res) => res.json())
-    // .then((res) => console.log(res))
-    .then((res) => fetchProjetos(res))
-  // .catch((err) => console.log(err.message))
-  console.log('Chamada realizada')
-}
+    redirect: 'follow'
+  };
 
-// exibe lista de projetos na pagina
-function fetchProjetos(lista) {
+  fetch("http://localhost:8082/users/1/workspaces", requestOptions)
+    .then(response => response.json())
+    .then(json => userWorkspace(json))
+    //.then(json => console.log(json))
+    .catch(error => console.log('error', error));
 
-  let linha = ''
+  stompClient.subscribe('/topic/user/' + userId + '/workspace.list', (user) => {
+    showGreeting(JSON.parse(user.body));
+  });
 
-  for (let i = 0; i < lista.object.length; i++) {
-    let nome = lista.object[i].nome
-    let autor = lista.object[i].usuario.nome
+  console.log('SUBSCRIBED: /topic/user/' + userId + '/workspace.list');
+};
 
-    linha += `
-        implementar como sera exibido
-    `
+stompClient.onWebSocketError = (error) => {
+  console.error('Error with websocket', error);
+};
+
+stompClient.onStompError = (frame) => {
+  console.error('Broker reported error: ' + frame.headers['message']);
+  console.error('Additional details: ' + frame.body);
+};
+
+function setConnected(connected) {
+  $("#connect").prop("disabled", connected);
+  $("#disconnect").prop("disabled", !connected);
+  if (connected) {
+    $("#conversation").show();
+  } else {
+    $("#conversation").hide();
   }
-  let card = `
-    ${linha}  
- `
-  projetosID.innerHTML = card
+  $("#workspaces").html("");
+}
 
+function connect() {
+  stompClient.activate();
+}
+
+function disconnect() {
+  stompClient.deactivate();
+  setConnected(false);
+  console.log("Disconnected");
+}
+
+function insertWorkspace() {
+  stompClient.publish({
+    destination: "/app/user/" + userId + "/workspace.add",
+    body: JSON.stringify({ 'name': $("#name").val(), 'description': $("#description").val() })
+  });
+}
+
+function updateWorkspace(id) {
+  var name = document.getElementById("editName_" + id).value;
+  var description = document.getElementById("editDescription_" + id).value;
+
+  stompClient.publish({
+    destination: "/app/user/" + userId + "/workspace.update/" + id,
+    body: JSON.stringify({ 'name': name, 'description': description })
+  });
+}
+
+function deleteWorkspace(id) {
+  stompClient.publish({
+    destination: "/app/user/" + userId + "/workspace.delete/" + id
+  });
+}
+
+function showGreeting(user) {
+  $("#workspaces").html("");
+  user.workspaces.sort(function (a, b) {
+    return new Date(b.workspace.updateDate) - new Date(a.workspace.updateDate);
+  });
+  document.getElementById("workspaces").innerHTML = "";
+  user.workspaces.forEach(workspaces => {
+
+    var rowId = workspaces.workspace.id;
+    $("#workspaces").append("<tr id='" + rowId + "'>")
+    $("#workspaces").append("<td><input id='editId_" + rowId + "' value='" + workspaces.workspace.id + "' readonly></td>");
+    $("#workspaces").append("<td><input id='editName_" + rowId + "' value='" + workspaces.workspace.name + "'></td>");
+    $("#workspaces").append("<td><input id='editDescription_" + rowId + "' value='" + workspaces.workspace.description + "'></td>");
+    $("#workspaces").append("<td><input id='editCreationDate_" + rowId + "' value='" + workspaces.workspace.creationDate + "' readonly></td>");
+    $("#workspaces").append("<td><input id='editUpdateDate_" + rowId + "' value='" + workspaces.workspace.updateDate + "' readonly></td>");
+    $("#workspaces").append("<td><input id='editOwner_" + rowId + "' value='" + workspaces.owner + "' readonly></td>");
+    $("#workspaces").append("<td><button onclick='updateWorkspace(\"" + rowId + "\")'>Update</button><button onclick='deleteWorkspace(\"" + rowId + "\")'>Delete</button></td>");
+    $("#workspaces").append("</tr>")
+
+  });
+}
+
+function userWorkspace2(user) {
+  $("#workspaces_teste").html("");
+  user.workspaces.sort(function (a, b) {
+    return new Date(b.workspace.updateDate) - new Date(a.workspace.updateDate);
+  });
+  document.getElementById("workspaces_teste").innerHTML = "";
+  user.workspaces.forEach(workspaces => {
+
+    var rowId = workspaces.workspace.id;
+    $("workspaces_teste").append("")
+
+
+
+
+  });
+}
+
+function userWorkspace(user) {
+  const workspacesContainer = document.getElementById("workspaces_teste");
+
+  // Limpa o conteúdo atual do contêiner
+  workspacesContainer.innerHTML = "";
+
+  // Ordena os workspaces por data de atualização
+  user.workspaces.sort(function (a, b) {
+    return new Date(b.workspace.updateDate) - new Date(a.workspace.updateDate);
+  });
+
+  // Itera sobre os workspaces e cria elementos HTML para cada um
+  user.workspaces.forEach((workspaces) => {
+    var rowId = workspaces.workspace.id;
+
+    const workspaceCard = document.createElement("div");
+    workspaceCard.id = "clicavel";
+    workspaceCard.className = "card";
+
+    const cardHeader = document.createElement("div");
+    cardHeader.id = `${rowId}`;
+    cardHeader.className = "card-header";
+    cardHeader.innerHTML = `
+    <h2>${workspaces.workspace.name}</h2>
+    
+    `;
+
+    const cardBody = document.createElement("div");
+    cardBody.className = "card-body";
+    //cardBody.setAttribute("ondrop", "drop(event)");
+    //cardBody.setAttribute("ondragover", "allowDrop(event)");
+
+    const item = document.createElement("div");
+    item.className = "item";
+
+    const description = document.createElement("div");
+    description.className = "col-12";
+    description.innerHTML = `<h8>${workspaces.workspace.description}</h8>`;
+
+    item.appendChild(description);
+    cardBody.appendChild(item);
+
+    const cardFooter = document.createElement("div");
+    cardFooter.className = "card-footer";
+    cardFooter.innerHTML = `<p>Data criação: ${workspaces.workspace.creationDate}</p><p>Data ultima atualização: ${workspaces.workspace.updateDate}</p>`;
+
+    workspaceCard.appendChild(cardHeader);
+    workspaceCard.appendChild(cardBody);
+    workspaceCard.appendChild(cardFooter);
+
+    workspacesContainer.appendChild(workspaceCard);
+  });
 }
 
 
-// incluir nova receita
-function incluirProjeto() {
-  const imgBase64 = img.replace("data:", "").replace(/^.+,/, "");
-
-  // Objeto a ser convertido e enviado
-  let obj = {
-    /*
-    nome: nomeReceita.value,
-    tempoPreparo: parseFloat(tempoPreparoReceita.value),
-    passos: passosReceita.value,
-    ingredientes: [],
-    imagem: imgBase64
-    */
-   nome: nomeProjeto.value
-  }
-
-  let usuario = nomeUsuarioID.value;
-  //console.log(usuario);
-
-  fetch(url + '/projetos/' + usuario, {
-    headers: headers,
-    method: 'POST',
-    body: JSON.stringify(obj),
-  })
-    .then((res) => res.json())
-    //.then((res) => res.text())
-    // .then((text) => console.log(text))
-    .catch((err) => console.log(err.message))
-
-  // document.location.reload(true)
-}
 
 
-/*
-  CRUD - implementar funções pra adcionar cartões aos projetos
-*/
+
+
+const userId = 1;
+$(function () {
+  $("form").on('submit', (e) => e.preventDefault());
+  $("#connect").click(() => connect());
+  $("#disconnect").click(() => disconnect());
+  $("#insert").click(() => insertWorkspace());
+  $(".update-btn").click(() => updateWorkspace());
+});
+
+
+
+
+
 
 
 // TODO: mudar o nome dessa funcao
@@ -341,9 +450,9 @@ document.addEventListener('click', event => {
       cartao.querySelector('.card-title').textContent = novoTitulo;
       // salvarCartoes();
     }
-  } else if (event.target.classList.contains('card-add')){ // esse é um botao para criar um novo card ao projeto
+  } else if (event.target.classList.contains('card-add')) { // esse é um botao para criar um novo card ao projeto
     // tenho que exibir um popup com as opcoes a serem inseridas
-  } else if (event.target.classList.contains('card-edt')){
+  } else if (event.target.classList.contains('card-edt')) {
     // aqui ele ira abrir um popup para editar o card ja existente,
     // talvez mudar o else if acima com a calsse card-editar?
   }

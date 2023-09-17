@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workspace</title>
+
+    
+
+  <link rel="stylesheet" href="../css/main.css">
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
+
+  <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm"
+    crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7.0.0/bundles/stomp.umd.min.js"></script>
+
+  <script type="text/javascript" src="../js/main.js"></script>
+  
+</head>
+
+<body style="padding-top: 70px;">
+
+    <nav class="navbar fixed-top navbar-expand-lg bg-body-tertiary">
+        <div class="container-fluid">
+          <a class="navbar-brand" href="#">Nome_Projeto</a>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+              <li class="nav-item">
+                <a class="nav-link active" aria-current="page" href="#">Página Inicial</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#">Link</a>
+              </li>
+    
+              <div class="container-fluid">
+                <button class="btn btn-primary" onclick="criarProjeto_teste()">Criar Novo Projeto</button>
+              </div>
+              <form class="form-inline">
+                <div class="form-group">
+                  <label for="connect">WebSocket test connection:</label>
+                  <button id="connect" class="btn btn-default" type="submit">Connect</button>
+                  <button id="disconnect" class="btn btn-default" type="submit" disabled="disabled">Disconnect
+                  </button>
+                </div>
+              </form>
+    
+            </ul>
+    
+          </div>
+        </div>
+      </nav>
+
+
+    <div id="workspaces_teste"></div>
+    
+</body>
+</html>
