@@ -6,6 +6,34 @@ stompClient.onConnect = (frame) => {
   setConnected(true);
   console.log('Connected: ' + frame);
 
+
+  listWorkspace();
+
+
+
+};
+
+function listProject(){
+  var requestOptions = {
+    method: 'GET',
+    redirect: 'follow'
+  };
+
+  fetch("http://localhost:8082/workspaces/1/projects", requestOptions)
+    .then(response => response.json())
+    .then(json => userProject(json)) // implementar essa funcao
+    //.then(json => console.log(json))
+    .catch(error => console.log('error', error));
+
+ // stompClient.subscribe('/topic/user/' + userId + '/workspace.list', (user) => {
+ //   showGreeting(JSON.parse(user.body));
+ // });
+
+  //console.log('SUBSCRIBED: /topic/user/' + userId + '/workspace.list');
+
+}
+
+function listWorkspace() {
   var requestOptions = {
     method: 'GET',
     redirect: 'follow'
@@ -22,7 +50,7 @@ stompClient.onConnect = (frame) => {
   });
 
   console.log('SUBSCRIBED: /topic/user/' + userId + '/workspace.list');
-};
+}
 
 stompClient.onWebSocketError = (error) => {
   console.error('Error with websocket', error);
@@ -95,23 +123,6 @@ function showGreeting(user) {
     $("#workspaces").append("<td><input id='editOwner_" + rowId + "' value='" + workspaces.owner + "' readonly></td>");
     $("#workspaces").append("<td><button onclick='updateWorkspace(\"" + rowId + "\")'>Update</button><button onclick='deleteWorkspace(\"" + rowId + "\")'>Delete</button></td>");
     $("#workspaces").append("</tr>")
-
-  });
-}
-
-function userWorkspace2(user) {
-  $("#workspaces_teste").html("");
-  user.workspaces.sort(function (a, b) {
-    return new Date(b.workspace.updateDate) - new Date(a.workspace.updateDate);
-  });
-  document.getElementById("workspaces_teste").innerHTML = "";
-  user.workspaces.forEach(workspaces => {
-
-    var rowId = workspaces.workspace.id;
-    $("workspaces_teste").append("")
-
-
-
 
   });
 }
