@@ -170,7 +170,7 @@ function userWorkspace(user) {
     cardBody.appendChild(item);
 
     const cardFooter = document.createElement("div");
-    cardFooter.className = "card-footer";
+    cardFooter.className = "card-footer d-none";
     cardFooter.innerHTML = `<p>Data criação: ${workspaces.workspace.creationDate}</p><p>Data ultima atualização: ${workspaces.workspace.updateDate}</p>`;
 
     workspaceCard.appendChild(cardHeader);

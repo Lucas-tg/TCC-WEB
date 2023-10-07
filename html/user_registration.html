@@ -23,30 +23,40 @@
   <script type="text/javascript" src="../js/main.js"></script>
   
 </head>
-<body>
-    
+<body>  
+    <div class="container text-center">
+      <div class="row">
+        <div class="col"></div>
+        <div class="col-6 card">
+          <div calss="card-header">
+            <h3>Cadastrar:</h3>
+          </div>
+          <div class="card-body">
+            <form>
 
-    <div class="container">
-        <form>
-
-            <div class="mb-3">
-                <label for="nome" class="form-label">Nome:</label>
-                <input type="" class="form-control" id="nome_user_registration">
+              <div class="mb-3">
+                  <label for="nome" class="form-label">Nome:</label>
+                  <input type="" class="form-control" id="nome_user_registration">
+                </div>
+  
+              <div class="mb-3">
+                <label for="email_user_registration" class="form-label">Email:</label>
+                <input type="email" class="form-control" id="email_user_registration" aria-describedby="emailHelp">
               </div>
-
-            <div class="mb-3">
-              <label for="email_user_registration" class="form-label">Email:</label>
-              <input type="email" class="form-control" id="email_user_registration" aria-describedby="emailHelp">
-            </div>
-            <div class="mb-3">
-              <label for="password_user_registration" class="form-label">Senha:</label>
-              <input type="password" class="form-control" id="password_user_registration">
-            </div>
-
-            <button type="submit" class="btn btn-primary" id="submit_user_registration">Registrar</button>
-
-          </form>
+              <div class="mb-3">
+                <label for="password_user_registration" class="form-label">Senha:</label>
+                <input type="password" class="form-control" id="password_user_registration">
+              </div>
+  
+              <button type="submit" class="btn btn-primary" id="submit_user_registration">Registrar</button>
+  
+            </form>
+          </div>
+        </div>
+        <div class="col"></div>
+      </div>
     </div>
+
 
 </body>
 </html>
