@@ -10,7 +10,7 @@ body {
   /* Faz com que os itens fiquem um ao lado do outro */
   /*width: 300px;  Largura do item 
     height: 300px;  Altura do item */
- /* background-color: #ccc; */
+  /* background-color: #ccc; */
   margin-right: 20px;
   /* Espaçamento entre os itens */
 }
@@ -73,6 +73,53 @@ body {
   min-height: 10vh;
 }
 
-#clicavel{
+#clicavel {
   cursor: pointer;
-  }
+}
+
+thead,
+tfoot {
+  display: none;
+}
+
+thead,
+tfoot,
+tbody,
+tr,
+td {
+  border: none !important;
+}
+
+tr td {
+  background-color: #fff !important;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse !important;
+}
+
+tr {
+  display: block;
+  padding: 1rem 0.5rem 1rem 0.5rem;
+  margin: 1.5rem;
+  border: 1px solid grey;
+  border-radius: 10px;
+  box-shadow: 0 0 10px;
+  width: 99%;
+
+}
+
+td {
+  display: block;
+  text-align: center;
+}
+
+td > * {
+  width: 100%;
+}
+
+input {
+  border: none;
+  outline: none;
+}
