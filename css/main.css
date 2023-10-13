@@ -27,6 +27,7 @@ body {
   border: 1px solid #ccc;
   margin-bottom: 10px;
   background-color: white;
+  margin: 20px;
 }
 
 .card-header {
