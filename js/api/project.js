@@ -1,3 +1,15 @@
+// Obtem os parametros da URL
+const params = new URLSearchParams(window.location.search);
+
+// Obtem o valor do parâmetro 'id'
+const workspaceId = params.get('id');
+
+console.log(`Workspace ID: ${workspaceId}`);
+
+
+//showProjects(workspaceId);
+
+
 function insertProject() {
     stompClient.publish({
         destination: `/app/workspace/${$("#projectIdWorkspace").val()}/project.add`,
