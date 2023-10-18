@@ -72,7 +72,6 @@ function showWorkspaces(user) {
             editButton.className = "btn btn-success";
             editButton.innerHTML = '<i class="bi bi-pencil-square"></i>';
             editButton.addEventListener("click", () => {
-                
                 updateWorkspace(workspaces.workspace.id);
                 console.log("Editar workspace: " + workspaces.workspace.id);
             });
@@ -87,9 +86,24 @@ function showWorkspaces(user) {
 
             buttonsContainer.appendChild(editButton);
             buttonsContainer.appendChild(deleteButton);
+            buttonsContainer.style.display = "none";
 
             cardHeader.appendChild(workspaceName);
             cardHeader.appendChild(buttonsContainer);
+
+            // Adicione o botão "Ações" para exibir/ocultar os botões de edição e deleção
+            const actionsButton = document.createElement("button");
+            actionsButton.className = "btn btn-primary";
+            actionsButton.innerHTML = "Ações";
+            actionsButton.addEventListener("click", () => {
+                if (buttonsContainer.style.display === "none") {
+                    buttonsContainer.style.display = "block";
+                } else {
+                    buttonsContainer.style.display = "none";
+                }
+            });
+
+            cardHeader.appendChild(actionsButton);
 
             const cardBody = document.createElement("div");
             cardBody.className = "card-body";
@@ -116,6 +130,7 @@ function showWorkspaces(user) {
         }
     });
 }
+
 
 
 
