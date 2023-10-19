@@ -51,6 +51,86 @@ function showWorkspaces(user) {
         if (user.workspaces.length === 0) {
             $(`#workspaces_teste`).remove();
         } else {
+
+            let rowId = workspaces.workspace.id;
+
+            const workspaceHTML = `
+              <div id="${`workspace_${rowId}`}" class="workspace_card">
+                <div class="workspace_header">
+                  <h2 class="workspace_title" contenteditable="false">
+                    ${workspaces.workspace.name}
+                    <a>
+                        <i id="${`pencil_${rowId}`}" class="fa fa-pencil pencil-link" data-row-id="${rowId}"></i>
+                        <i id="${`trash_${rowId}`}" class="fa fa-trash trash-link" data-row-id="${rowId}"></i>
+                    </a>
+                  </h2>
+                </div>
+                <div class="workspace_card_body" contenteditable="false">
+                  <p>${workspaces.workspace.description}</p>
+                </div>
+                <div class="workspace_card_footer" onclick="goToWorkspacePage(event, ${rowId})">
+                    <i class="fa-solid fa-circle-chevron-right fa-2xl"></i>
+                </div>
+              </div>
+            `;
+            workspacesContainer.innerHTML += workspaceHTML;
+
+
+            const editIcons = document.querySelectorAll(`#pencil_${rowId}`);
+            editIcons.forEach(icon => {
+                icon.addEventListener('click', function () {
+                    /*
+                    O conteúdo editável pode ser acessado usando
+                     icon.parentElement.previousElementSibling.textContent para o título
+                     e icon.parentElement.nextElementSibling.textContent para a descrição.
+                    */
+                    //updateWorkspace(this.getAttribute('data-row-id')); // not working
+                    
+                });
+            });
+
+            const deleteIcons = document.querySelectorAll(`#trash_${rowId}`);
+            deleteIcons.forEach(icon => {
+                icon.addEventListener('click', function () {
+                    deleteWorkspace(this.getAttribute('data-row-id'));
+                    console.log("hte")
+                });
+            });
+
+
+
+
+        }
+    });
+}
+
+function goToWorkspacePage(event, workspaceId) {
+   // event.stopPropagation();
+   // if (event.target.id === `workspace_${workspaceId}`) {
+        const url = `project.html?id=${workspaceId}`;
+        window.location.href = url;
+   // }    
+}
+
+
+
+
+function showWorkspaces_old33(user) {
+    const workspacesContainer = document.getElementById("workspaces_teste");
+
+    // Limpa o conteúdo atual do contêiner
+    workspacesContainer.innerHTML = "";
+
+    // Ordena os workspaces por data de atualização
+    user.workspaces.sort(function (a, b) {
+        return new Date(b.workspace.updateDate) - new Date(a.workspace.updateDate);
+    });
+
+    // Itera sobre os workspaces e cria elementos HTML para cada um
+    user.workspaces.forEach((workspaces) => {
+        if (user.workspaces.length === 0) {
+            $(`#workspaces_teste`).remove();
+        } else {
             var rowId = workspaces.workspace.id;
 
             const workspaceCard = document.createElement("div");

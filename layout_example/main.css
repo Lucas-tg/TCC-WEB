@@ -1,25 +1,5 @@
-body_old {
-    font-family: sans-serif;
-    color: #172b4d;
-    background-color: #000000;
-    display: flex;
-    align-items: start;
-  }
-  
-  div {
-    border-radius: 3px;
-  }
-  
-  #main {
-    display: flex;
-    align-items: start;
-  }
+ 
 
-  #main2 {
-    display: flex;
-    align-items: start;
-  }
-  
   .title {
     font-weight: 600;
     margin: 7px;
@@ -69,10 +49,7 @@ body_old {
     height: auto;
     max-height: 300px;
     overflow: auto;
-  }
-
-
-  
+  }  
   
   
   .add-list {
@@ -83,11 +60,7 @@ body_old {
     color: hsla(0,0%,100%,.8);
   }
   
-  .ghost {
-    opacity: .1;
-    color: #000;
-    background-color: #000;
-  }
+
   
   .add-card {
     width: calc(100% - 35px);

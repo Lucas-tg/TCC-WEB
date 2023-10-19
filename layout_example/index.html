@@ -9,10 +9,12 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
     integrity="sha512-z3gLpd7yknf1YoNbCzqRKc4qyor8gaKU1qmn+CShxbuBusANI9QpRohGBreCFkKxLhei6S9CQXFEbbKuqLg0DA=="
     crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 </head>
 
 <body>
-
   <div class="card_test">
     <div class="card-header">
       <h2 class="card-title">
@@ -63,6 +65,24 @@
         <div class="add-card editable">Adicionar novo cartao</div>
       </div>
     </div>
+
+
+
+    <script>
+        $(document).ready(function() {
+          $(".card").draggable({
+            containment: ".list", // Restringir o arrasto aos elementos com classe "list"
+            helper: "clone",
+          });
+    
+          $(".list .content").droppable({
+            accept: ".card",
+            drop: function(event, ui) {
+              $(this).append(ui.helper);
+            },
+          });
+        });
+      </script>
 
 </body>
 
