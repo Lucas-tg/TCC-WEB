@@ -23,6 +23,23 @@ function initContent() {
 
 initContent();
 
+// for test only
+function initContent2() {
+  const dropzones = document.querySelectorAll('.project_card');
+  dropzones.forEach(item => {
+    new Sortable(item, {
+      group: 'list',
+      sort: true,
+      draggable: '.list',
+      ghostClass: "ghost",
+    });
+  });
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+  initContent2();
+});
+
 const inputs = document.querySelectorAll('textarea');
 
 inputs.forEach(item => {
@@ -96,7 +113,7 @@ function elBlurHandler(e) {
     el.className = 'card removable editable';
     const newEl = document.createElement('div');
     newEl.className = 'add-card editable';
-    newEl.appendChild(document.createTextNode('Add another card'));
+    newEl.appendChild(document.createTextNode('+ Adicionar novo card'));
     el.parentNode.appendChild(newEl);
     el.parentNode.querySelector('.content').appendChild(el);
   }
@@ -110,14 +127,13 @@ function elBlurHandler(e) {
     el.className = 'title removable editable';
     const newContent = document.createElement('div');
     newContent.className = 'content';
+
     el.parentElement.appendChild(newContent);
 
     const newEl = document.createElement('div');
     newEl.className = 'add-card editable';
-    newEl.appendChild(document.createTextNode('Add another card'));
+    newEl.appendChild(document.createTextNode('+ Adicionar novo card'));
     el.parentNode.appendChild(newEl);
-
-    document.querySelector('#main').appendChild(el.parentElement);
 
     initContent();
 
@@ -125,9 +141,9 @@ function elBlurHandler(e) {
     addList.className = 'add-list';
     const title = document.createElement('div');
     title.className = 'title editable';
-    title.appendChild(document.createTextNode('Add another list'));
+    title.appendChild(document.createTextNode('+ Adicionar novo catálogo'));
     addList.appendChild(title);
-    document.querySelector('body').appendChild(addList);
+    el.parentElement.parentElement.appendChild(addList);
   }
 
   initDelete();
