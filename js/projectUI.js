@@ -25,7 +25,7 @@ initContent();
 
 // for test only
 function initContent2() {
-  const dropzones = document.querySelectorAll('.project_card');
+  const dropzones = document.querySelectorAll('.list-container');
   dropzones.forEach(item => {
     new Sortable(item, {
       group: 'list',
@@ -189,3 +189,8 @@ function deleteHandler(e) {
     parent.parentElement.parentElement.removeChild(parent.parentElement);
   }
 }
+
+document.getElementById('navbarToggler').addEventListener('click', function () {
+  var navbarNav = document.getElementById('navbarNav');
+  navbarNav.style.display = (navbarNav.style.display === 'flex' || navbarNav.style.display === '') ? 'none' : 'flex';
+});
