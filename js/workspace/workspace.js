@@ -63,9 +63,6 @@ function disconnect() {
     console.log("Disconnected");
 }
 
-$(function () {
-    $("#workspaceInsert").click(() => insertWorkspace());
-});
 
 function criarAreaDeTrabalho() {
     // Mostrar a mensagem de sucesso
