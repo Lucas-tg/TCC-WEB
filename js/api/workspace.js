@@ -93,7 +93,6 @@ function showWorkspaces(user) {
             deleteIcons.forEach(icon => {
                 icon.addEventListener('click', function () {
                     deleteWorkspace(this.getAttribute('data-row-id'));
-                    console.log("hte")
                 });
             });
 

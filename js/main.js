@@ -1,4 +1,5 @@
 
+
 function criarCartao2(titulo) {
     const novoCartao = document.createElement('div');
     // novoCartao.className = 'card';
