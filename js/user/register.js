@@ -5,27 +5,29 @@ $(function () {
 function register() {
 
     let obj = {
-        name: name.value,
-        email: email.value,
-        pass: pass.value
+        name: nome_user_registration.value,
+        email: email_user_registration.value,
+        pass: password_user_registration.value
     }
 
     var requestOptions = {
         method: 'POST',
         redirect: 'follow',
+        headers: {
+            'Content-Type': 'application/json'
+        },
         body: JSON.stringify(obj)
     };
 
 
-    fetch("http://localhost:8082/users", requestOptions)
+    fetch("http://localhost:8082/users/register", requestOptions)
         .then(response => response.json())
+        .then(json => {
+            const userId = json.id;
+            if(userId != null){
+                window.location.href = `workspace.html?userId=${userId}`;
+            }
+            // mensagem de erro para o usuário
+        })
         .catch(error => console.log('error', error));
-
-
-
-    //  stompClient.subscribe('/topic/users/user.list', (user) => {
-    //showGreeting(JSON.parse(user.body));
-    //  });
-
-    // console.log('SUBSCRIBED: /topic/user/' + userId + '/workspace.list');
 }

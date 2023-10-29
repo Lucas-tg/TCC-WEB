@@ -6,24 +6,27 @@ $(function () {
 function login() {
 
     let obj = {
-        email: email.value,
-        pass: pass.value
+        email: inputEmail.value,
+        pass: inputPassword.value
     }
 
     var requestOptions = {
         method: 'POST',
         redirect: 'follow',
+        headers: {
+            'Content-Type': 'application/json'
+        },
         body: JSON.stringify(obj)
     };
 
 
-    fetch("", requestOptions) // Ainda não temos o endPoint
+    fetch("http://localhost:8082/users/login", requestOptions)
         .then(response => response.json())
-        .then(userId = xxxx)
+        .then(json => {
+            const userId = json.id;
+            window.location.href = `workspace.html?userId=${userId}`;
+        })
         .catch(error => console.log('error', error));
-
-    const url = `workspace.html?userId=${userId}`;
-    window.location.href = url;
 }
 
 function register() {
