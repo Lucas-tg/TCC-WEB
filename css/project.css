@@ -1,7 +1,7 @@
 body {
   font-family: sans-serif;
   color: #172b4d;
-  background-color: #00561e;
+  background-color: #dfe1e6;
   /*  display: flex;*/
   align-items: start;
 }
@@ -66,10 +66,11 @@ div {
   min-width: 280px;
   margin: 10px 5px;
   position: relative;
-  background: rgba(0, 0, 0, .12);
+  background: #dfe1e6;
   color: hsla(0, 0%, 100%, .8);
+  border-radius: 10px;
 }
-
+  
 .ghost {
   opacity: .1;
   color: #000;

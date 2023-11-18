@@ -1,4 +1,3 @@
-
 // const userId = params.get('userId');
 const userId = 1;
 $(function () {
@@ -63,7 +62,6 @@ function disconnect() {
     console.log("Disconnected");
 }
 
-
 function criarAreaDeTrabalho() {
     // Mostrar a mensagem de sucesso
     document.getElementById('mensagemSucesso').style.display = 'block';
@@ -86,13 +84,21 @@ function insertWorkspace() {
     criarAreaDeTrabalho();
 }
 
-function updateWorkspace(id) {
-    var name = document.getElementById(`workspaceName_${id}`).value;
-    var description = document.getElementById(`workspaceDescription_${id}`).value;
+// rowId = id do workspace;
+// userName = input do usuario no modal (email do usuario)
+function addUserWorkspace(rowId, userName) {
+    console.log(`${rowId} ${userName}`);
+    /*
+    stompClient.publish({
+       // destination: ...
+    });
+    */
+}
 
+function updateWorkspace(id, name, description) {
     stompClient.publish({
         destination: `/app/user/${userId}/workspace.update/${id}`,
-        body: JSON.stringify({'name': name, 'description': description})
+        body: JSON.stringify({ 'name': name, 'description': description })
     });
 }
 
@@ -127,13 +133,14 @@ function showWorkspaces(user) {
                   <h2 class="workspace_title" contenteditable="false">
                     ${workspaces.workspace.name}
                     <a>
-                        <i id="${`pencil_${rowId}`}" class="fa fa-pencil pencil-link" data-row-id="${rowId}"></i>
-                        <i id="${`trash_${rowId}`}" class="fa fa-trash trash-link" data-row-id="${rowId}"></i>
+                        <i id="${`addUser_${rowId}`}" class="addUserIcon fa-solid fa-user-plus" data-row-id="${rowId}"></i>
+                        <i id="${`pencil_${rowId}`}" class="pencilIcon fa fa-pencil pencil-link" data-row-id="${rowId}"></i>
+                        <i id="${`trash_${rowId}`}" class="trashIcon fa fa-trash trash-link" data-row-id="${rowId}"></i>
                     </a>
                   </h2>
                 </div>
                 <div class="workspace_card_body" contenteditable="false">
-                  <p>${workspaces.workspace.description}</p>
+                  <p class="workspace_description">${workspaces.workspace.description}</p>
                 </div>
                 <div class="workspace_card_footer" onclick="goToWorkspacePage(event, ${rowId})">
                     <i class="fa-solid fa-circle-chevron-right fa-2xl"></i>
@@ -142,29 +149,81 @@ function showWorkspaces(user) {
             `;
             workspacesContainer.innerHTML += workspaceHTML;
 
-
-            const editIcons = document.querySelectorAll(`#pencil_${rowId}`);
-            editIcons.forEach(icon => {
+            const addUserIcons = document.querySelectorAll('.addUserIcon');
+            addUserIcons.forEach(icon => {
                 icon.addEventListener('click', function () {
-                    /*
-                    O conteúdo editável pode ser acessado usando
-                     icon.parentElement.previousElementSibling.textContent para o título
-                     e icon.parentElement.nextElementSibling.textContent para a descrição.
-                    */
-                    //updateWorkspace(this.getAttribute('data-row-id')); // not working
+                    console.log("entrou user");
 
+                    // Obtém o ID do elemento clicado
+                    const rowId = this.getAttribute('data-row-id');
+
+                    // Obtém o modal pelo seu ID
+                    const modal = document.getElementById('exampleModalUser');
+
+                    if (modal) {
+                        // Abre o modal
+                        const bootstrapModal = new bootstrap.Modal(modal);
+                        bootstrapModal.show();
+
+                        // Adiciona um ouvinte de evento para o botão workspaceInsertUser
+                        const addUserButton = document.getElementById('workspaceInsertUser');
+                        addUserButton.addEventListener('click', function () {
+                            // Obtém o nome de usuário inserido no formulário
+                            const userName = document.getElementById('workspaceNameNewUser').value;
+
+                            // Chama a função addUser com o ID do elemento clicado e o nome do usuário
+                            addUserWorkspace(rowId, userName);
+
+                            // Fecha o modal
+                            bootstrapModal.hide();
+                        });
+                    }
                 });
             });
 
-            const deleteIcons = document.querySelectorAll(`#trash_${rowId}`);
+            const editIcons = document.querySelectorAll('.pencilIcon');
+            editIcons.forEach(icon => {
+                icon.addEventListener('click', function () {
+                    console.log("entrou caneta");
+
+                    // Obtém o ID do elemento clicado
+                    const rowId = this.getAttribute('data-row-id');
+
+                    // Seleciona o título e a descrição pelo ID do workspace
+                    const titleElement = document.getElementById(`workspace_${rowId}`).querySelector('.workspace_title');
+                    const descriptionElement = document.getElementById(`workspace_${rowId}`).querySelector('.workspace_card_body p');
+
+                    // Verifica se o conteúdo é editável
+                    const isEditable = titleElement.isContentEditable;
+
+                    // Alterna entre os modos de visualização e edição
+                    titleElement.contentEditable = !isEditable;
+                    descriptionElement.contentEditable = !isEditable;
+
+                    // Atualiza a classe para refletir o modo de edição
+                    titleElement.classList.toggle('editable', !isEditable);
+
+                    // Se estiver no modo de edição, adiciona um ouvinte para salvar as alterações
+                    if (!isEditable) {
+                        titleElement.addEventListener('blur', function () {
+                            // Obtém os novos dados
+                            const name = this.textContent;
+                            const description = descriptionElement.textContent;
+
+                            // Chama a função updateWorkspace com o ID do elemento clicado e os novos dados
+                            updateWorkspace(rowId, name, description);
+                        });
+                    }
+                });
+            });
+
+            const deleteIcons = document.querySelectorAll('.trashIcon');
             deleteIcons.forEach(icon => {
                 icon.addEventListener('click', function () {
-                    console.log("ENTROU")
+                    console.log("ENTROU");
                     deleteWorkspace(this.getAttribute('data-row-id'));
                 });
             });
-
-
         }
     });
 }
