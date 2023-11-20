@@ -1,0 +1,220 @@
+  .title {
+      font-weight: 600;
+      margin: 7px;
+      padding: 10px;
+  }
+
+  .editable {
+      user-select: none;
+      outline: none;
+      display: flex;
+      justify-content: space-between;
+  }
+
+  .editing {
+      background: white;
+      color: #172b4d !important;
+      box-shadow: inset 0px 0px 0px 2px #0279bf;
+  }
+
+  .editing:hover {
+      background: white !important;
+  }
+
+  .card {
+      background: white;
+      border-bottom: 1px solid #aaa;
+      margin: 7px;
+      padding: 10px;
+      cursor: pointer !important;
+  }
+
+
+  .list {
+      /*   padding: 7px; */
+      min-width: 280px;
+      margin: 10px 5px;
+      position: relative;
+      background: #dfe1e6;
+  }
+
+  .list-workspace {
+      min-width: 500px;
+      max-width: 700px;
+      margin: 10px 5px;
+      position: relative;
+      background: #b5db9e;
+      height: auto;
+      max-height: 300px;
+      overflow: auto;
+  }
+
+
+  .add-list {
+      min-width: 280px;
+      margin: 10px 5px;
+      position: relative;
+      background: rgba(0, 0, 0, .12);
+      color: hsla(0, 0%, 100%, .8);
+  }
+
+
+
+  .add-card {
+      width: calc(100% - 35px);
+      display: inline-block;
+      padding: 10px;
+      margin-top: 0px;
+      color: gray;
+      text-decoration: none;
+      margin: 7px;
+      padding: 10px;
+      /*   border-bottom: 1px solid #dfe1e6; */
+  }
+
+  .add-card:hover {
+      background-color: rgba(9, 30, 66, .13);
+  }
+
+  .del {
+      font-weight: 600;
+      color: gray;
+  }
+
+  .content {
+      border-bottom: 1px solid #cecece;
+  }
+
+
+  .workspace_card {
+      background-color: #ffffff;
+      border: 1px solid #ccc;
+      border-radius: 20px;
+      padding: 10px;
+      width: 70%;
+      margin: 0 auto;
+      margin-bottom: 20px;
+      cursor: pointer !important;
+  }
+
+  .workspace_header {
+      background-color: #f9f9f9;
+      padding: 10px;
+      border-radius: 20px;
+  }
+
+  .workspace_title {
+      display: flex;
+      justify-content: space-between;
+  }
+
+  .workspace_title.editable {
+        border-bottom: 2px solid #007bff;
+        cursor: text;
+    }  
+    
+    .workspace_description.editable {
+        border-bottom: 2px solid #007bff;
+        cursor: text;
+    }
+
+  .fa-user-plus {
+        text-decoration: none;
+        color: #333;
+    }
+
+    .fa-user-plus:hover {
+        color: rgb(59, 129, 137)
+    }
+
+  .pencil-link {
+      text-decoration: none;
+      color: #333;
+  }
+
+  .pencil-link:hover {
+      color: #116719;
+  }
+
+  .trash-link {
+      text-decoration: none;
+      color: #333;
+  }
+
+  .trash-link:hover {
+      color: #ff0000;
+  }
+
+  .card-subtitle {
+      font-size: 16px;
+      font-weight: normal;
+  }
+
+  .workspace_card_body {
+      padding: 10px;
+      margin: 10px 0;
+      position: relative;
+      height: auto;
+      max-height: 300px;
+      overflow: auto;
+  }
+
+  .workspace_card_footer {
+      padding: 10px;
+      text-align: right;
+
+  }
+
+  .workspace_card_footer i {
+      float: right;
+  }
+
+  .list-inline {
+      margin-bottom: 0;
+  }
+
+  .list-inline-item {
+      margin-right: 10px;
+  }
+
+  .project_card {
+      background-color: #ffffff;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      padding: 10px;
+      margin-bottom: 20px;
+  }
+
+  .project_catalog {
+      margin-top: 15px;
+      /* Adiciona espaço entre o projeto e o catálogo */
+  }
+
+
+  .card_test2 {
+      background-color: #ffffff;
+      border: 1px solid #ccc;
+      border-radius: 20px;
+      padding: 10px;
+      width: 95%;
+      margin: 0 auto;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: start;
+  }
+
+
+
+  .card-header2 {
+      background-color: #f9f9f9;
+      padding: 10px;
+      border-radius: 20px;
+      flex-grow: 1;
+      /* Faz com que o card-header ocupe o espaço disponível */
+      box-sizing: border-box;
+      /* Garante que as bordas e o preenchimento não aumentem a largura total */
+      display: block;
+  }
+
+
+  /* ajustar o display*/
