@@ -1,55 +1,36 @@
-// Obtem os parametros da URL
-const params = new URLSearchParams(window.location.search);
+const stompClient = new StompJs.Client({
+    brokerURL: 'ws://localhost:8082/ws'
+});
 
-// Obtem o valor do parâmetro 'id'
-const workspaceId = params.get('id');
+stompClient.onWebSocketError = (error) => {
+    console.error('Error with websocket', error);
+};
 
-console.log(`Workspace ID: ${workspaceId}`);
+stompClient.onStompError = (frame) => {
+    console.error(`Broker reported error: ${frame.headers['message']}`);
+    console.error(`Additional details: ${frame.body}`);
+};
 
+stompClient.onConnect = (frame) => {
+    console.log(`Connected: ${frame}`);
 
-//showProjects(workspaceId);
+    stompClient.subscribe(`/topic/workspace/${workspaceId}/project.list`, (workspace) => {
+        showProjects(JSON.parse(workspace.body));
+    });
+    console.log(`SUBSCRIBED: /topic/workspace/${workspaceId}/project.list`);
 
+    var requestOptions = {
+        method: 'GET',
+        redirect: 'follow'
+    };
 
-function insertProject() {
-    stompClient.publish({
-        destination: `/app/workspace/${$("#projectIdWorkspace").val()}/project.add`,
-        body: JSON.stringify({
-            'name': $("#projectName").val(),
-            'description': $("#projectDescription").val(),
-            'idWorkspace': $("#projectIdWorkspace").val(),
-            'workspacePosition': $("#projectWorkspacePosition").val()
+    fetch(`http://localhost:8082/workspaces/${workspaceId}/projects`, requestOptions)
+        .then(response => response.json())
+        .then(json => {
+            showProjects(json);
         })
-    });
-}
-
-function updateProject(oldWorkspaceId, oldWorkspacePosition) {
-    var id = document.getElementById(`projectId_${oldWorkspaceId}_${oldWorkspacePosition}`).value;
-    var name = document.getElementById(`projectName_${oldWorkspaceId}_${oldWorkspacePosition}`).value;
-    var description = document.getElementById(`projectDescription_${oldWorkspaceId}_${oldWorkspacePosition}`).value;
-    var workspaceId = document.getElementById(`projectWorkspaceId_${oldWorkspaceId}_${oldWorkspacePosition}`).value;
-    var workspacePosition = document.getElementById(`projectWorkspacePosition_${oldWorkspaceId}_${oldWorkspacePosition}`).value;
-
-    console.log(`Updating project ${id}`);
-
-    stompClient.publish({
-        destination: `/app/workspace/${oldWorkspaceId}/${workspaceId}/project.update/${id}`,
-        body: JSON.stringify({
-            'name': name,
-            'description': description,
-            'idWorkspace': workspaceId,
-            'workspacePosition': workspacePosition
-        })
-    });
-}
-
-function deleteProject(workspaceId, projectWorkspacePosition) {
-    var projectId =  $(`#projectId_${workspaceId}_${projectWorkspacePosition}`).val();
-    console.log(`Deleting project ${projectId}`);
-    stompClient.publish({
-        destination: `/app/workspace/${workspaceId}/project.delete/${projectId}`
-    });
-}
-
+        .catch(error => console.log('error', error));
+};
 
 function showProjects(workspaces) {
     if (!Array.isArray(workspaces)) {
@@ -58,153 +39,142 @@ function showProjects(workspaces) {
     }
 
     workspaces.forEach(workspace => {
-        var workspaceId = workspace.id;
-
-        // clear projects
-        if (workspace.projects.length === 0) {
-            $(`#projectTable_${workspaceId}`).remove(); //mudar o id
-        } else {
-            workspace.projects.sort(function (a, b) {
-                return a.workspacePosition - b.workspacePosition;
-            });
-
-            if ($(`#projectTable_${workspaceId}`).length <= 0) {
-                $("#tables").append(`<table id="projectTable_${workspaceId}" class="table table-striped"><thead id='projectHead_${workspaceId}'><caption>Projects</caption><tr><th>Workspace Id</th><th>Id</th><th>Name</th><th>Description</th><th>Position</th><th>Action</th></tr></thead><tbody id='projectBody_${workspaceId}'></tbody></table>`);
-
-                workspace.projects.forEach(project => {
-                    var projectWorkspacePosition = project.workspacePosition;
-
-                    var tableLine = `<td><input id='projectWorkspaceId_${workspaceId}_${projectWorkspacePosition}' value='${workspaceId}'></td>`;
-                    tableLine += `<td><input id='projectId_${workspaceId}_${projectWorkspacePosition}' value='${project.id}' readonly></td>`;
-                    tableLine += `<td><input id='projectName_${workspaceId}_${projectWorkspacePosition}' value='${project.name}'></td>`;
-                    tableLine += `<td><input id='projectDescription_${workspaceId}_${projectWorkspacePosition}' value='${project.description}'></td>`;
-                    tableLine += `<td><input id='projectWorkspacePosition_${workspaceId}_${projectWorkspacePosition}' value='${project.workspacePosition}'></td>`;
-                    tableLine += `<td><button onclick='updateProject(${workspaceId}, ${projectWorkspacePosition})'>Update</button>`;
-                    tableLine += `<button onclick='deleteProject(${workspaceId}, ${projectWorkspacePosition})'>Delete</button></td>`;
-                    $(`#projectBody_${workspaceId}`).append(`<tr id="projectLine_${workspaceId}_${projectWorkspacePosition}">${tableLine}</tr>`);
-                });
-
-                // console.log($(`#projectBody_${workspaceId}`).html());
+        if (parseInt(workspaceId) === workspace.id) {
+            projectsCount = workspace.projects.length;
+            // clear projects
+            if (projectsCount === 0) {
+                $(`#projects`).remove();
             } else {
-                workspace.projects.forEach(project => {
-                    var projectWorkspacePosition = project.workspacePosition;
-
-                    if ($(`#projectLine_${workspaceId}_${projectWorkspacePosition}`).length > 0) {
-
-                        $(`#projectWorkspaceId_${workspaceId}_${projectWorkspacePosition}`).val(workspaceId);
-                        $(`#projectId_${workspaceId}_${projectWorkspacePosition}`).val(project.id);
-                        $(`#projectName_${workspaceId}_${projectWorkspacePosition}`).val(project.name);
-                        $(`#projectDescription_${workspaceId}_${projectWorkspacePosition}`).val(project.description);
-                        $(`#projectWorkspacePosition_${workspaceId}_${projectWorkspacePosition}`).val(project.workspacePosition);
-
-                    } else {
-
-                        var tableLine = `<tr id="projectLine_${workspaceId}_${projectWorkspacePosition}">`;
-                        tableLine += `<td><input id='projectWorkspaceId_${workspaceId}_${projectWorkspacePosition}' value='${workspaceId}'></td>`;
-                        tableLine +=`<td><input id='projectId_${workspaceId}_${projectWorkspacePosition}' value='${project.id}' readonly></td>`;
-                        tableLine +=`<td><input id='projectName_${workspaceId}_${projectWorkspacePosition}' value='${project.name}'></td>`;
-                        tableLine +=`<td><input id='projectDescription_${workspaceId}_${projectWorkspacePosition}' value='${project.description}'></td>`;
-                        tableLine +=`<td><input id='projectWorkspacePosition_${workspaceId}_${projectWorkspacePosition}' value='${project.workspacePosition}'></td>`;
-                        tableLine +=`<td><button onclick='updateProject(${workspaceId}, ${projectWorkspacePosition})'>Update</button>`;
-                        tableLine +=`<button onclick='deleteProject(${workspaceId}, ${projectWorkspacePosition})'>Delete</button></td>`;
-                        $(`#projectBody_${workspaceId}`).append(`<tr id="projectLine_${workspaceId}_${projectWorkspacePosition}">${tableLine}</tr>`);
-
-                    }
+                workspace.projects.sort(function (a, b) {
+                    return a.workspacePosition - b.workspacePosition;
                 });
+                // tela não possui nada
+                if ($(`#projects`).length <= 0) {
+                    console.log("TELA LIMPA")
+                    $("#main").append(`<div class="container" id="projects"></div>`);
 
-                // remove others
-                $(`#projectBody_${workspaceId} tr`).each(function () {
-                    var projectWorkspacePosition = this.id.replace(`projectLine_${workspaceId}_`, "");
+                    workspace.projects.forEach(project => {
+                        console.log("NOVO")
+                        const position = project.workspacePosition;
+                        const divProject = `
+                        <div class="project_card" id="project_${position}">
+                            <div class="project_card_header" id="header">
+                                <h1 id="name">${project.name}</h1>
+                            </div>
+                            <div class="list-container">
+                                <div class="add-list">
+                                    <div class="title editable">+ Adicionar novo catálogo</div>
+                                </div>
+                        </div>`;
+                        // ${project.id}
+                        $(`#projects`).append(divProject);
+                    });
 
-                    console.log(`Encontrando ${projectWorkspacePosition}`);
 
-                    var matchingProject = workspace.projects.find(project => project.workspacePosition.toString() === projectWorkspacePosition.toString());
-                    if (!matchingProject) {
-                        console.log(this);
-                        $(this).remove();
+                    // tela possui projetos sendo exibidos
+                } else {
+                    console.log("TELA NÃO LIMPA")
+                    workspace.projects.forEach(project => {
+                        const position = project.workspacePosition;
+
+                        // reescreve os dados do projeto para aquela posição
+                        if ($(`#project_${position}`).length > 0) {
+                            console.log("REESCREVE")
+                            $(`#project_${position} #header #name`).text(project.name);
+
+                            // cria novo projeto no final
+                        } else {
+                            console.log("NOVO")
+                            const position = project.workspacePosition;
+                            const divProject = `
+                            <div class="project_card" id="project_${position}">
+                                <div class="project_card_header">
+                                    <h1 id="name">${project.name}</h1>
+                                </div>
+                                <div class="list-container">
+                                    <div class="add-list">
+                                        <div class="title editable">+ Adicionar novo catálogo</div>
+                                    </div>
+                            </div>`;
+                            // ${project.id}
+                            $(`#projects`).append(divProject);
+
+                        }
+                    });
+
+                    // remove projetos que sobraram
+                    console.log($(`#projects`).children().length);
+                    while ((idRemove = $(`#projects`).children().length) > projectsCount) {
+                        console.log("REMOVE " + idRemove)
+                        $(`#project_${idRemove}`).remove();
+                        idRemove--;
                     }
-                });
+                }
             }
         }
     });
 }
 
+function alertProjectCreated() {
+    // Mostrar a mensagem de sucesso
+    document.getElementById('mensagemSucesso').style.display = 'block';
 
+    // Fechar o modal
+    $('#createProjectModal').modal('hide');
 
-function showProjects_old(workspaces) {
-    if (!Array.isArray(workspaces)) {
-        // transform to array
-        workspaces = [workspaces];
-    }
-
-    workspaces.forEach(workspace => {
-        var workspaceId = workspace.id;
-
-        // clear projects
-        if (workspace.projects.length === 0) {
-            $(`#projectTable_${workspaceId}`).remove();
-        } else {
-            workspace.projects.sort(function (a, b) {
-                return a.workspacePosition - b.workspacePosition;
-            });
-
-            if ($(`#projectTable_${workspaceId}`).length <= 0) {
-                $("#tables").append(`<table id="projectTable_${workspaceId}" class="table table-striped"><thead id='projectHead_${workspaceId}'><caption>Projects</caption><tr><th>Workspace Id</th><th>Id</th><th>Name</th><th>Description</th><th>Position</th><th>Action</th></tr></thead><tbody id='projectBody_${workspaceId}'></tbody></table>`);
-
-                workspace.projects.forEach(project => {
-                    var projectWorkspacePosition = project.workspacePosition;
-
-                    var tableLine = `<td><input id='projectWorkspaceId_${workspaceId}_${projectWorkspacePosition}' value='${workspaceId}'></td>`;
-                    tableLine += `<td><input id='projectId_${workspaceId}_${projectWorkspacePosition}' value='${project.id}' readonly></td>`;
-                    tableLine += `<td><input id='projectName_${workspaceId}_${projectWorkspacePosition}' value='${project.name}'></td>`;
-                    tableLine += `<td><input id='projectDescription_${workspaceId}_${projectWorkspacePosition}' value='${project.description}'></td>`;
-                    tableLine += `<td><input id='projectWorkspacePosition_${workspaceId}_${projectWorkspacePosition}' value='${project.workspacePosition}'></td>`;
-                    tableLine += `<td><button onclick='updateProject(${workspaceId}, ${projectWorkspacePosition})'>Update</button>`;
-                    tableLine += `<button onclick='deleteProject(${workspaceId}, ${projectWorkspacePosition})'>Delete</button></td>`;
-                    $(`#projectBody_${workspaceId}`).append(`<tr id="projectLine_${workspaceId}_${projectWorkspacePosition}">${tableLine}</tr>`);
-                });
-
-                // console.log($(`#projectBody_${workspaceId}`).html());
-            } else {
-                workspace.projects.forEach(project => {
-                    var projectWorkspacePosition = project.workspacePosition;
-
-                    if ($(`#projectLine_${workspaceId}_${projectWorkspacePosition}`).length > 0) {
-
-                        $(`#projectWorkspaceId_${workspaceId}_${projectWorkspacePosition}`).val(workspaceId);
-                        $(`#projectId_${workspaceId}_${projectWorkspacePosition}`).val(project.id);
-                        $(`#projectName_${workspaceId}_${projectWorkspacePosition}`).val(project.name);
-                        $(`#projectDescription_${workspaceId}_${projectWorkspacePosition}`).val(project.description);
-                        $(`#projectWorkspacePosition_${workspaceId}_${projectWorkspacePosition}`).val(project.workspacePosition);
-
-                    } else {
-
-                        var tableLine = `<tr id="projectLine_${workspaceId}_${projectWorkspacePosition}">`;
-                        tableLine += `<td><input id='projectWorkspaceId_${workspaceId}_${projectWorkspacePosition}' value='${workspaceId}'></td>`;
-                        tableLine +=`<td><input id='projectId_${workspaceId}_${projectWorkspacePosition}' value='${project.id}' readonly></td>`;
-                        tableLine +=`<td><input id='projectName_${workspaceId}_${projectWorkspacePosition}' value='${project.name}'></td>`;
-                        tableLine +=`<td><input id='projectDescription_${workspaceId}_${projectWorkspacePosition}' value='${project.description}'></td>`;
-                        tableLine +=`<td><input id='projectWorkspacePosition_${workspaceId}_${projectWorkspacePosition}' value='${project.workspacePosition}'></td>`;
-                        tableLine +=`<td><button onclick='updateProject(${workspaceId}, ${projectWorkspacePosition})'>Update</button>`;
-                        tableLine +=`<button onclick='deleteProject(${workspaceId}, ${projectWorkspacePosition})'>Delete</button></td>`;
-                        $(`#projectBody_${workspaceId}`).append(`<tr id="projectLine_${workspaceId}_${projectWorkspacePosition}">${tableLine}</tr>`);
-
-                    }
-                });
-
-                // remove others
-                $(`#projectBody_${workspaceId} tr`).each(function () {
-                    var projectWorkspacePosition = this.id.replace(`projectLine_${workspaceId}_`, "");
-
-                    console.log(`Encontrando ${projectWorkspacePosition}`);
-
-                    var matchingProject = workspace.projects.find(project => project.workspacePosition.toString() === projectWorkspacePosition.toString());
-                    if (!matchingProject) {
-                        console.log(this);
-                        $(this).remove();
-                    }
-                });
-            }
-        }
-    });
+    // Ocultar a mensagem de sucesso após 3 segundos (3000 milissegundos)
+    setTimeout(function () {
+        document.getElementById('mensagemSucesso').style.display = 'none';
+    }, 3000); // 3 segundos (3000 ms)
 }
+
+function insertProject() {
+    console.log(workspaceId);
+    stompClient.publish({
+        destination: `/app/workspace/${workspaceId}/project.add`,
+        body: JSON.stringify({
+            'name': $("#newProjectName").val(),
+            'description': $("#newProjectDescription").val(),
+            'idWorkspace': workspaceId,
+            'workspacePosition': projectsCount + 1
+        })
+    });
+    alertProjectCreated();
+}
+
+// function updateProject(oldWorkspaceId, oldWorkspacePosition) {
+//     var id = document.getElementById(`projectId_${oldWorkspaceId}_${oldWorkspacePosition}`).value;
+//     var name = document.getElementById(`projectName_${oldWorkspaceId}_${oldWorkspacePosition}`).value;
+//     var description = document.getElementById(`projectDescription_${oldWorkspaceId}_${oldWorkspacePosition}`).value;
+//     var workspaceId = document.getElementById(`projectWorkspaceId_${oldWorkspaceId}_${oldWorkspacePosition}`).value;
+//     var workspacePosition = document.getElementById(`projectWorkspacePosition_${oldWorkspaceId}_${oldWorkspacePosition}`).value;
+//
+//     console.log(`Updating project ${id}`);
+//
+//     stompClient.publish({
+//         destination: `/app/workspace/${oldWorkspaceId}/${workspaceId}/project.update/${id}`,
+//         body: JSON.stringify({
+//             'name': name,
+//             'description': description,
+//             'idWorkspace': workspaceId,
+//             'workspacePosition': workspacePosition
+//         })
+//     });
+// }
+
+// function deleteProject(workspaceId, projectWorkspacePosition) {
+//     var projectId = $(`#projectId_${workspaceId}_${projectWorkspacePosition}`).val();
+//     console.log(`Deleting project ${projectId}`);
+//     stompClient.publish({
+//         destination: `/app/workspace/${workspaceId}/project.delete/${projectId}`
+//     });
+// }
+
+$(function () {
+    $('#createProject').click(() => insertProject());
+});
+
+// Obtem o valor do parâmetro 'id'
+const workspaceId = sessionStorage.getItem("workspaceId");
+var projectsCount = 1;
+stompClient.activate();

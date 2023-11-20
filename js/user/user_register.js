@@ -1,7 +1,3 @@
-$(function () {
-    $('#submit_user_registration').click(() => user_register());
-});
-
 function user_register() {
 
     let obj = {
@@ -32,3 +28,7 @@ function user_register() {
         })
         .catch(error => console.log('error', error));
 }
+
+$(function () {
+    $('#submit_user_registration').click(() => user_register());
+});

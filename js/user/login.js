@@ -1,8 +1,3 @@
-$(function () {
-    $('#submit_login').click(() => login());
-    $('#go_to_user_registration').click(() => register());
-});
-
 function login() {
 
     let obj = {
@@ -35,3 +30,8 @@ function login() {
 function register() {
     window.location.href = 'user_register.html';
 }
+
+$(function () {
+    $('#submit_login').click(() => login());
+    $('#go_to_user_registration').click(() => register());
+});

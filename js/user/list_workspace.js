@@ -1,35 +1,6 @@
-$(function () {
-    $("#connect").click(() => connect());
-    $("#disconnect").click(() => disconnect());
-    $("#workspaceInsert").click(() => insertWorkspace());
-    $(".update-btn").click(() => updateWorkspace());
-});
-
 const stompClient = new StompJs.Client({
     brokerURL: 'ws://localhost:8082/ws'
 });
-
-stompClient.onConnect = (frame) => {
-    setConnected(true);
-    console.log(`Connected: ${frame}`);
-
-    var requestOptions = {
-        method: 'GET',
-        redirect: 'follow'
-    };
-
-    stompClient.subscribe(`/topic/user/${userId}/workspace.list`, (user) => {
-        showWorkspaces(JSON.parse(user.body));
-    });
-    console.log(`SUBSCRIBED: /topic/user/${userId}/workspace.list`);
-
-    fetch(`http://localhost:8082/users/${userId}/workspaces`, requestOptions)
-        .then(response => response.json())
-        .then(json => {
-            showWorkspaces(json);
-        })
-        .catch(error => console.log('error', error));
-};
 
 stompClient.onWebSocketError = (error) => {
     console.error('Error with websocket', error);
@@ -40,23 +11,29 @@ stompClient.onStompError = (frame) => {
     console.error(`Additional details: ${frame.body}`);
 };
 
-function setConnected(connected) {
-    $("#connect").prop("disabled", connected);
-    $("#disconnect").prop("disabled", !connected);
-    if (connected) {
-        $("#tables").show();
-    } else {
-        $("#tables").hide();
-    }
-}
+stompClient.onConnect = (frame) => {
+    console.log(`Connected: ${frame}`);
 
-function disconnect() {
-    stompClient.deactivate();
-    setConnected(false);
-    console.log("Disconnected");
-}
+    stompClient.subscribe(`/topic/user/${userId}/workspace.list`, (user) => {
+        showWorkspaces(JSON.parse(user.body));
+    });
+    console.log(`SUBSCRIBED: /topic/user/${userId}/workspace.list`);
 
-function criarAreaDeTrabalho() {
+
+    var requestOptions = {
+        method: 'GET',
+        redirect: 'follow'
+    };
+
+    fetch(`http://localhost:8082/users/${userId}/workspaces`, requestOptions)
+        .then(response => response.json())
+        .then(json => {
+            showWorkspaces(json);
+        })
+        .catch(error => console.log('error', error));
+};
+
+function alertWorkspaceCreated() {
     // Mostrar a mensagem de sucesso
     document.getElementById('mensagemSucesso').style.display = 'block';
 
@@ -75,7 +52,7 @@ function insertWorkspace() {
             'name': $("#workspaceNameNewProject").val(), 'description': $("#workspaceDescriptionNewProject").val()
         })
     });
-    criarAreaDeTrabalho();
+    alertWorkspaceCreated();
 }
 
 // rowId = id do workspace;
@@ -103,7 +80,7 @@ function deleteWorkspace(id) {
 }
 
 function showWorkspaces(user) {
-    const workspacesContainer = document.getElementById("workspaces_teste");
+    const workspacesContainer = document.getElementById("workspaces");
 
     // Limpa o conteúdo atual do contêiner
     workspacesContainer.innerHTML = "";
@@ -116,7 +93,7 @@ function showWorkspaces(user) {
     // Itera sobre os workspaces e cria elementos HTML para cada um
     user.workspaces.forEach((workspaces) => {
         if (user.workspaces.length === 0) {
-            $(`#workspaces_teste`).remove();
+            $(`#workspaces`).remove();
         } else {
 
             let rowId = workspaces.workspace.id;
@@ -226,6 +203,11 @@ function goToWorkspacePage(event, workspaceId) {
     sessionStorage.setItem("workspaceId", workspaceId);
     window.location.href = 'workspace.html';
 }
+
+$(function () {
+    $("#workspaceInsert").click(() => insertWorkspace());
+    $(".update-btn").click(() => updateWorkspace());
+});
 
 const userId = sessionStorage.getItem("userId");
 stompClient.activate();
