@@ -108,6 +108,25 @@
       justify-content: space-between;
   }
 
+  .workspace_title.editable {
+        border-bottom: 2px solid #007bff;
+        cursor: text;
+    }  
+    
+    .workspace_description.editable {
+        border-bottom: 2px solid #007bff;
+        cursor: text;
+    }
+
+  .fa-user-plus {
+        text-decoration: none;
+        color: #333;
+    }
+
+    .fa-user-plus:hover {
+        color: rgb(59, 129, 137)
+    }
+
   .pencil-link {
       text-decoration: none;
       color: #333;
