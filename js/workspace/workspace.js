@@ -15,13 +15,13 @@ stompClient.onConnect = (frame) => {
     console.log(`Connected: ${frame}`);
 
     stompClient.subscribe(`/topic/workspace/${workspaceId}/project.list`, (workspace) => {
+        console.log(`RESPONSE FROM: /topic/workspace/${workspaceId}/project.list`);
         showProjects(JSON.parse(workspace.body));
     });
     console.log(`SUBSCRIBED: /topic/workspace/${workspaceId}/project.list`);
 
     var requestOptions = {
-        method: 'GET',
-        redirect: 'follow'
+        method: 'GET', redirect: 'follow'
     };
 
     fetch(`http://localhost:8082/workspaces/${workspaceId}/projects`, requestOptions)
@@ -32,6 +32,27 @@ stompClient.onConnect = (frame) => {
         .catch(error => console.log('error', error));
 };
 
+function getCatalogs(projectId, projectPosition){
+
+    console.log(3);
+    stompClient.subscribe(`/topic/project/${projectId}/catalog.list`, (project) => {
+        console.log(`RESPONSE FROM: /topic/project/${projectId}/catalog.list`);
+        showProjects(JSON.parse(project.body));
+    });
+    console.log(`SUBSCRIBED: /topic/project/${projectId}/catalog.list`);
+
+    var requestOptions = {
+        method: 'GET', redirect: 'follow'
+    };
+
+    fetch(`http://localhost:8082/projects/${projectId}/catalogs`, requestOptions)
+        .then(response => response.json())
+        .then(json => {
+            showCatalogs(json, projectPosition);
+        })
+        .catch(error => console.log('error', error));
+}
+
 function showProjects(workspaces) {
     if (!Array.isArray(workspaces)) {
         // transform to array
@@ -39,107 +60,141 @@ function showProjects(workspaces) {
     }
 
     workspaces.forEach(workspace => {
-        if (parseInt(workspaceId) === workspace.id) {
-            projectsCount = workspace.projects.length;
-            // clear projects
-            if (projectsCount === 0) {
-                $(`#projects`).remove();
-            } else {
-                workspace.projects.sort(function (a, b) {
-                    return a.workspacePosition - b.workspacePosition;
-                });
-                // tela não possui nada
-                if ($(`#projects`).length <= 0) {
-                    console.log("TELA LIMPA")
-                    $("#main").append(`<div class="container" id="projects"></div>`);
+        console.log(1);
+        const projectsCount = workspace.projects.length;
+        // clear projects
+        if (projectsCount === 0) {
+            $(`#projects`).remove();
+        } else {
+            workspace.projects.sort(function (a, b) {
+                return a.workspacePosition - b.workspacePosition;
+            });
+            // tela não possui nada
+            if ($(`#projects`).length <= 0) {
+                $("#main").append(`<div class="container" id="projects"></div>`);
+            }
+            workspace.projects.forEach(project => {
+                console.log(2);
+                const position = project.workspacePosition;
 
-                    workspace.projects.forEach(project => {
-                        console.log("NOVO")
-                        const position = project.workspacePosition;
-                        const divProject = `
-                        <div class="project_card" id="project_${position}">
-                            <div class="project_card_header" id="header">
-                                <h1 id="name">${project.name}</h1>
-                            </div>
-                            <div class="list-container">
-                                <div class="add-list">
-                                    <div class="title editable">+ Adicionar novo catálogo</div>
-                                </div>
-                        </div>`;
-                        // ${project.id}
-                        $(`#projects`).append(divProject);
-                    });
+                // reescreve os dados do projeto para aquela posição
+                if ($(`#project_${position}`).length > 0) {
+                    $(`#project_${position} #header #project_name`).text(project.name);
 
+                    getCatalogs(project.id, position);
 
-                    // tela possui projetos sendo exibidos
+                    // cria novo projeto no final
                 } else {
-                    console.log("TELA NÃO LIMPA")
-                    workspace.projects.forEach(project => {
-                        const position = project.workspacePosition;
-
-                        // reescreve os dados do projeto para aquela posição
-                        if ($(`#project_${position}`).length > 0) {
-                            console.log("REESCREVE")
-                            $(`#project_${position} #header #name`).text(project.name);
-
-                            // cria novo projeto no final
-                        } else {
-                            console.log("NOVO")
-                            const position = project.workspacePosition;
-                            const divProject = `
+                    const divProject = `
                             <div class="project_card" id="project_${position}">
-                                <div class="project_card_header">
-                                    <h1 id="name">${project.name}</h1>
+                                <div class="project_card_header" id="header">
+                                    <h1 id="project_name">${project.name}</h1>
                                 </div>
-                                <div class="list-container">
-                                    <div class="add-list">
+                                <div class="list-container" id="list_catalog">
+                                    <div class="add-list" id="insert_catalog">
                                         <div class="title editable">+ Adicionar novo catálogo</div>
                                     </div>
+                                </div>
                             </div>`;
-                            // ${project.id}
-                            $(`#projects`).append(divProject);
+                    $(`#projects`).append(divProject);
 
-                        }
-                    });
-
-                    // remove projetos que sobraram
-                    console.log($(`#projects`).children().length);
-                    while ((idRemove = $(`#projects`).children().length) > projectsCount) {
-                        console.log("REMOVE " + idRemove)
-                        $(`#project_${idRemove}`).remove();
-                        idRemove--;
-                    }
+                    getCatalogs(project.id, position);
                 }
+            });
+
+            // remove projetos que sobraram
+            while ((idRemove = $(`#projects`).children().length) > projectsCount) {
+                $(`#project_${idRemove}`).remove();
+                idRemove--;
             }
         }
     });
 }
 
-function alertProjectCreated() {
+function showCatalogs(projects, projectPosition) {
+    if (!Array.isArray(projects)) {
+        // transform to array
+        projects = [projects];
+    }
+
+    projects.forEach(project => {
+
+        console.log(4);
+        var catalogsCount = project.catalogs.length;
+
+        project.catalogs.sort(function (a, b) {
+            return a.projectPosition - b.projectPosition;
+        });
+
+        project.catalogs.forEach(catalog => {
+            console.log(5);
+
+            const position = catalog.projectPosition;
+
+            // reescreve os dados do catálogo para aquela posição
+            if ($(`#project_${projectPosition} #list_catalog`).length > 1) {
+                $(`#project_${projectPosition} #list_catalog #catalog_${position} #catalog_name`).text(catalog.name);
+
+                // cria novo catálogo no final
+            } else {
+
+                $(`#project_${projectPosition} #list_catalog #insert_catalog`).remove();
+                const divCatalog = `
+                    <div class="list" id="catalog_${position}">
+                        <div class="title removable editable" id="catalog_name">${catalog.name}</div>
+                        <div class="add-card editable" id="insert_card">+ Adicionar novo card</div>
+                    </div>
+                    <div class="add-list" id="insert_catalog">
+                        <div class="title editable">+ Adicionar novo catálogo</div>
+                    </div>`;
+                $(`#project_${projectPosition} #list_catalog`).append(divCatalog);
+
+            }
+        });
+
+        // remove catalogos que sobraram
+        while ((idRemove = $(`#project_${projectPosition} #list_catalog`).children().length - 1) > catalogsCount) {
+            $(`#project_${projectPosition} #list_catalog catalog_${idRemove}`).remove();
+            idRemove--;
+        }
+    });
+}
+
+function alertCreated(message) {
+    $(`#sucessAlert`).text(message);
     // Mostrar a mensagem de sucesso
-    document.getElementById('mensagemSucesso').style.display = 'block';
+    document.getElementById('sucessAlert').style.display = 'block';
 
     // Fechar o modal
     $('#createProjectModal').modal('hide');
 
     // Ocultar a mensagem de sucesso após 3 segundos (3000 milissegundos)
     setTimeout(function () {
-        document.getElementById('mensagemSucesso').style.display = 'none';
+        document.getElementById('sucessAlert').style.display = 'none';
     }, 3000); // 3 segundos (3000 ms)
 }
 
 function insertProject() {
-    console.log(workspaceId);
     stompClient.publish({
-        destination: `/app/workspace/${workspaceId}/project.add`,
-        body: JSON.stringify({
+        destination: `/app/workspace/${workspaceId}/project.add`, body: JSON.stringify({
             'name': $("#newProjectName").val(),
             'description': $("#newProjectDescription").val(),
             'idWorkspace': workspaceId,
-            'workspacePosition': projectsCount + 1
+            'workspacePosition': -1
         })
     });
-    alertProjectCreated();
+    alertCreated('Projeto criado com sucesso!');
+}
+
+function insertCatalog(projectId) {
+    stompClient.publish({
+        destination: `/app/project/${projectId}/catalog.add`, body: JSON.stringify({
+            'name': $("#newCatalogName").val(),
+            'idWorkspace': projectId,
+            'workspacePosition': -1
+        })
+    });
+    alertCreated('Catálogo criado com sucesso!');
 }
 
 // function updateProject(oldWorkspaceId, oldWorkspacePosition) {
@@ -172,9 +227,9 @@ function insertProject() {
 
 $(function () {
     $('#createProject').click(() => insertProject());
+    $('#createCatalog').click(() => insertCatalog());
 });
 
 // Obtem o valor do parâmetro 'id'
 const workspaceId = sessionStorage.getItem("workspaceId");
-var projectsCount = 1;
 stompClient.activate();
