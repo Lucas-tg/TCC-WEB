@@ -1,237 +1,210 @@
-// const userId = params.get('userId');
-const userId = 1;
-$(function () {
-    $("#connect").click(() => connect());
-    $("#disconnect").click(() => disconnect());
-    $("#workspaceInsert").click(() => insertWorkspace());
-    $(".update-btn").click(() => updateWorkspace());
-});
+// Obtem os parametros da URL
+const params = new URLSearchParams(window.location.search);
 
-const stompClient = new StompJs.Client({
-    brokerURL: 'ws://localhost:8082/ws'
-});
+// Obtem o valor do parâmetro 'id'
+const workspaceId = params.get('id');
 
-stompClient.onConnect = (frame) => {
-    setConnected(true);
-    console.log(`Connected: ${frame}`);
+console.log(`Workspace ID: ${workspaceId}`);
 
-    var requestOptions = {
-        method: 'GET',
-        redirect: 'follow'
-    };
 
-    stompClient.subscribe(`/topic/user/${userId}/workspace.list`, (user) => {
-        showWorkspaces(JSON.parse(user.body));
-    });
-    console.log(`SUBSCRIBED: /topic/user/${userId}/workspace.list`);
+//showProjects(workspaceId);
 
-    fetch(`http://localhost:8082/users/${userId}/workspaces`, requestOptions)
-        .then(response => response.json())
-        .then(json => {
-            showWorkspaces(json);
+
+function insertProject() {
+    stompClient.publish({
+        destination: `/app/workspace/${$("#projectIdWorkspace").val()}/project.add`,
+        body: JSON.stringify({
+            'name': $("#projectName").val(),
+            'description': $("#projectDescription").val(),
+            'idWorkspace': $("#projectIdWorkspace").val(),
+            'workspacePosition': $("#projectWorkspacePosition").val()
         })
-        .catch(error => console.log('error', error));
-};
+    });
+}
 
-stompClient.onWebSocketError = (error) => {
-    console.error('Error with websocket', error);
-};
+function updateProject(oldWorkspaceId, oldWorkspacePosition) {
+    var id = document.getElementById(`projectId_${oldWorkspaceId}_${oldWorkspacePosition}`).value;
+    var name = document.getElementById(`projectName_${oldWorkspaceId}_${oldWorkspacePosition}`).value;
+    var description = document.getElementById(`projectDescription_${oldWorkspaceId}_${oldWorkspacePosition}`).value;
+    var workspaceId = document.getElementById(`projectWorkspaceId_${oldWorkspaceId}_${oldWorkspacePosition}`).value;
+    var workspacePosition = document.getElementById(`projectWorkspacePosition_${oldWorkspaceId}_${oldWorkspacePosition}`).value;
 
-stompClient.onStompError = (frame) => {
-    console.error(`Broker reported error: ${frame.headers['message']}`);
-    console.error(`Additional details: ${frame.body}`);
-};
+    console.log(`Updating project ${id}`);
 
-function setConnected(connected) {
-    $("#connect").prop("disabled", connected);
-    $("#disconnect").prop("disabled", !connected);
-    if (connected) {
-        $("#tables").show();
-    } else {
-        $("#tables").hide();
+    stompClient.publish({
+        destination: `/app/workspace/${oldWorkspaceId}/${workspaceId}/project.update/${id}`,
+        body: JSON.stringify({
+            'name': name,
+            'description': description,
+            'idWorkspace': workspaceId,
+            'workspacePosition': workspacePosition
+        })
+    });
+}
+
+function deleteProject(workspaceId, projectWorkspacePosition) {
+    var projectId =  $(`#projectId_${workspaceId}_${projectWorkspacePosition}`).val();
+    console.log(`Deleting project ${projectId}`);
+    stompClient.publish({
+        destination: `/app/workspace/${workspaceId}/project.delete/${projectId}`
+    });
+}
+
+
+function showProjects(workspaces) {
+    if (!Array.isArray(workspaces)) {
+        // transform to array
+        workspaces = [workspaces];
     }
-}
 
-function connect() {
-    stompClient.activate();
-}
+    workspaces.forEach(workspace => {
+        var workspaceId = workspace.id;
 
-function disconnect() {
-    stompClient.deactivate();
-    setConnected(false);
-    console.log("Disconnected");
-}
-
-function criarAreaDeTrabalho() {
-    // Mostrar a mensagem de sucesso
-    document.getElementById('mensagemSucesso').style.display = 'block';
-
-    // Fechar o modal
-    $('#exampleModal').modal('hide');
-
-    // Ocultar a mensagem de sucesso após 3 segundos (3000 milissegundos)
-    setTimeout(function () {
-        document.getElementById('mensagemSucesso').style.display = 'none';
-    }, 3000); // 3 segundos (3000 ms)
-}
-
-function insertWorkspace() {
-    stompClient.publish({
-        destination: `/app/user/${userId}/workspace.add`, body: JSON.stringify({
-            'name': $("#workspaceNameNewProject").val(), 'description': $("#workspaceDescriptionNewProject").val()
-        })
-    });
-    criarAreaDeTrabalho();
-}
-
-// rowId = id do workspace;
-// userName = input do usuario no modal (email do usuario)
-function addUserWorkspace(rowId, userName) {
-    console.log(`${rowId} ${userName}`);
-    /*
-    stompClient.publish({
-       // destination: ...
-    });
-    */
-}
-
-function updateWorkspace(id, name, description) {
-    stompClient.publish({
-        destination: `/app/user/${userId}/workspace.update/${id}`,
-        body: JSON.stringify({ 'name': name, 'description': description })
-    });
-}
-
-function deleteWorkspace(id) {
-    stompClient.publish({
-        destination: `/app/user/${userId}/workspace.delete/${id}`
-    });
-}
-
-function showWorkspaces(user) {
-    const workspacesContainer = document.getElementById("workspaces_teste");
-
-    // Limpa o conteúdo atual do contêiner
-    workspacesContainer.innerHTML = "";
-
-    // Ordena os workspaces por data de atualização
-    user.workspaces.sort(function (a, b) {
-        return new Date(b.workspace.updateDate) - new Date(a.workspace.updateDate);
-    });
-
-    // Itera sobre os workspaces e cria elementos HTML para cada um
-    user.workspaces.forEach((workspaces) => {
-        if (user.workspaces.length === 0) {
-            $(`#workspaces_teste`).remove();
+        // clear projects
+        if (workspace.projects.length === 0) {
+            $(`#projectTable_${workspaceId}`).remove(); //mudar o id
         } else {
+            workspace.projects.sort(function (a, b) {
+                return a.workspacePosition - b.workspacePosition;
+            });
 
-            let rowId = workspaces.workspace.id;
+            if ($(`#projectTable_${workspaceId}`).length <= 0) {
+                $("#tables").append(`<table id="projectTable_${workspaceId}" class="table table-striped"><thead id='projectHead_${workspaceId}'><caption>Projects</caption><tr><th>Workspace Id</th><th>Id</th><th>Name</th><th>Description</th><th>Position</th><th>Action</th></tr></thead><tbody id='projectBody_${workspaceId}'></tbody></table>`);
 
-            const workspaceHTML = `
-              <div id="${`workspace_${rowId}`}" class="workspace_card">
-                <div class="workspace_header">
-                  <h2 class="workspace_title" contenteditable="false">
-                    ${workspaces.workspace.name}
-                    <a>
-                        <i id="${`addUser_${rowId}`}" class="addUserIcon fa-solid fa-user-plus" data-row-id="${rowId}"></i>
-                        <i id="${`pencil_${rowId}`}" class="pencilIcon fa fa-pencil pencil-link" data-row-id="${rowId}"></i>
-                        <i id="${`trash_${rowId}`}" class="trashIcon fa fa-trash trash-link" data-row-id="${rowId}"></i>
-                    </a>
-                  </h2>
-                </div>
-                <div class="workspace_card_body" contenteditable="false">
-                  <p class="workspace_description">${workspaces.workspace.description}</p>
-                </div>
-                <div class="workspace_card_footer" onclick="goToWorkspacePage(event, ${rowId})">
-                    <i class="fa-solid fa-circle-chevron-right fa-2xl"></i>
-                </div>
-              </div>
-            `;
-            workspacesContainer.innerHTML += workspaceHTML;
+                workspace.projects.forEach(project => {
+                    var projectWorkspacePosition = project.workspacePosition;
 
-            const addUserIcons = document.querySelectorAll('.addUserIcon');
-            addUserIcons.forEach(icon => {
-                icon.addEventListener('click', function () {
-                    console.log("entrou user");
+                    var tableLine = `<td><input id='projectWorkspaceId_${workspaceId}_${projectWorkspacePosition}' value='${workspaceId}'></td>`;
+                    tableLine += `<td><input id='projectId_${workspaceId}_${projectWorkspacePosition}' value='${project.id}' readonly></td>`;
+                    tableLine += `<td><input id='projectName_${workspaceId}_${projectWorkspacePosition}' value='${project.name}'></td>`;
+                    tableLine += `<td><input id='projectDescription_${workspaceId}_${projectWorkspacePosition}' value='${project.description}'></td>`;
+                    tableLine += `<td><input id='projectWorkspacePosition_${workspaceId}_${projectWorkspacePosition}' value='${project.workspacePosition}'></td>`;
+                    tableLine += `<td><button onclick='updateProject(${workspaceId}, ${projectWorkspacePosition})'>Update</button>`;
+                    tableLine += `<button onclick='deleteProject(${workspaceId}, ${projectWorkspacePosition})'>Delete</button></td>`;
+                    $(`#projectBody_${workspaceId}`).append(`<tr id="projectLine_${workspaceId}_${projectWorkspacePosition}">${tableLine}</tr>`);
+                });
 
-                    // Obtém o ID do elemento clicado
-                    const rowId = this.getAttribute('data-row-id');
+                // console.log($(`#projectBody_${workspaceId}`).html());
+            } else {
+                workspace.projects.forEach(project => {
+                    var projectWorkspacePosition = project.workspacePosition;
 
-                    // Obtém o modal pelo seu ID
-                    const modal = document.getElementById('exampleModalUser');
+                    if ($(`#projectLine_${workspaceId}_${projectWorkspacePosition}`).length > 0) {
 
-                    if (modal) {
-                        // Abre o modal
-                        const bootstrapModal = new bootstrap.Modal(modal);
-                        bootstrapModal.show();
+                        $(`#projectWorkspaceId_${workspaceId}_${projectWorkspacePosition}`).val(workspaceId);
+                        $(`#projectId_${workspaceId}_${projectWorkspacePosition}`).val(project.id);
+                        $(`#projectName_${workspaceId}_${projectWorkspacePosition}`).val(project.name);
+                        $(`#projectDescription_${workspaceId}_${projectWorkspacePosition}`).val(project.description);
+                        $(`#projectWorkspacePosition_${workspaceId}_${projectWorkspacePosition}`).val(project.workspacePosition);
 
-                        // Adiciona um ouvinte de evento para o botão workspaceInsertUser
-                        const addUserButton = document.getElementById('workspaceInsertUser');
-                        addUserButton.addEventListener('click', function () {
-                            // Obtém o nome de usuário inserido no formulário
-                            const userName = document.getElementById('workspaceNameNewUser').value;
+                    } else {
 
-                            // Chama a função addUser com o ID do elemento clicado e o nome do usuário
-                            addUserWorkspace(rowId, userName);
+                        var tableLine = `<tr id="projectLine_${workspaceId}_${projectWorkspacePosition}">`;
+                        tableLine += `<td><input id='projectWorkspaceId_${workspaceId}_${projectWorkspacePosition}' value='${workspaceId}'></td>`;
+                        tableLine +=`<td><input id='projectId_${workspaceId}_${projectWorkspacePosition}' value='${project.id}' readonly></td>`;
+                        tableLine +=`<td><input id='projectName_${workspaceId}_${projectWorkspacePosition}' value='${project.name}'></td>`;
+                        tableLine +=`<td><input id='projectDescription_${workspaceId}_${projectWorkspacePosition}' value='${project.description}'></td>`;
+                        tableLine +=`<td><input id='projectWorkspacePosition_${workspaceId}_${projectWorkspacePosition}' value='${project.workspacePosition}'></td>`;
+                        tableLine +=`<td><button onclick='updateProject(${workspaceId}, ${projectWorkspacePosition})'>Update</button>`;
+                        tableLine +=`<button onclick='deleteProject(${workspaceId}, ${projectWorkspacePosition})'>Delete</button></td>`;
+                        $(`#projectBody_${workspaceId}`).append(`<tr id="projectLine_${workspaceId}_${projectWorkspacePosition}">${tableLine}</tr>`);
 
-                            // Fecha o modal
-                            bootstrapModal.hide();
-                        });
                     }
                 });
-            });
 
-            const editIcons = document.querySelectorAll('.pencilIcon');
-            editIcons.forEach(icon => {
-                icon.addEventListener('click', function () {
-                    console.log("entrou caneta");
+                // remove others
+                $(`#projectBody_${workspaceId} tr`).each(function () {
+                    var projectWorkspacePosition = this.id.replace(`projectLine_${workspaceId}_`, "");
 
-                    // Obtém o ID do elemento clicado
-                    const rowId = this.getAttribute('data-row-id');
+                    console.log(`Encontrando ${projectWorkspacePosition}`);
 
-                    // Seleciona o título e a descrição pelo ID do workspace
-                    const titleElement = document.getElementById(`workspace_${rowId}`).querySelector('.workspace_title');
-                    const descriptionElement = document.getElementById(`workspace_${rowId}`).querySelector('.workspace_card_body p');
-
-                    // Verifica se o conteúdo é editável
-                    const isEditable = titleElement.isContentEditable;
-
-                    // Alterna entre os modos de visualização e edição
-                    titleElement.contentEditable = !isEditable;
-                    descriptionElement.contentEditable = !isEditable;
-
-                    // Atualiza a classe para refletir o modo de edição
-                    titleElement.classList.toggle('editable', !isEditable);
-
-                    // Se estiver no modo de edição, adiciona um ouvinte para salvar as alterações
-                    if (!isEditable) {
-                        titleElement.addEventListener('blur', function () {
-                            // Obtém os novos dados
-                            const name = this.textContent;
-                            const description = descriptionElement.textContent;
-
-                            // Chama a função updateWorkspace com o ID do elemento clicado e os novos dados
-                            updateWorkspace(rowId, name, description);
-                        });
+                    var matchingProject = workspace.projects.find(project => project.workspacePosition.toString() === projectWorkspacePosition.toString());
+                    if (!matchingProject) {
+                        console.log(this);
+                        $(this).remove();
                     }
                 });
-            });
-
-            const deleteIcons = document.querySelectorAll('.trashIcon');
-            deleteIcons.forEach(icon => {
-                icon.addEventListener('click', function () {
-                    console.log("ENTROU");
-                    deleteWorkspace(this.getAttribute('data-row-id'));
-                });
-            });
+            }
         }
     });
 }
 
-function goToWorkspacePage(event, workspaceId) {
-    // event.stopPropagation();
-    // if (event.target.id === `workspace_${workspaceId}`) {
-    const url = `project.html?id=${workspaceId}`;
-    window.location.href = url;
-    // }
+
+
+function showProjects_old(workspaces) {
+    if (!Array.isArray(workspaces)) {
+        // transform to array
+        workspaces = [workspaces];
+    }
+
+    workspaces.forEach(workspace => {
+        var workspaceId = workspace.id;
+
+        // clear projects
+        if (workspace.projects.length === 0) {
+            $(`#projectTable_${workspaceId}`).remove();
+        } else {
+            workspace.projects.sort(function (a, b) {
+                return a.workspacePosition - b.workspacePosition;
+            });
+
+            if ($(`#projectTable_${workspaceId}`).length <= 0) {
+                $("#tables").append(`<table id="projectTable_${workspaceId}" class="table table-striped"><thead id='projectHead_${workspaceId}'><caption>Projects</caption><tr><th>Workspace Id</th><th>Id</th><th>Name</th><th>Description</th><th>Position</th><th>Action</th></tr></thead><tbody id='projectBody_${workspaceId}'></tbody></table>`);
+
+                workspace.projects.forEach(project => {
+                    var projectWorkspacePosition = project.workspacePosition;
+
+                    var tableLine = `<td><input id='projectWorkspaceId_${workspaceId}_${projectWorkspacePosition}' value='${workspaceId}'></td>`;
+                    tableLine += `<td><input id='projectId_${workspaceId}_${projectWorkspacePosition}' value='${project.id}' readonly></td>`;
+                    tableLine += `<td><input id='projectName_${workspaceId}_${projectWorkspacePosition}' value='${project.name}'></td>`;
+                    tableLine += `<td><input id='projectDescription_${workspaceId}_${projectWorkspacePosition}' value='${project.description}'></td>`;
+                    tableLine += `<td><input id='projectWorkspacePosition_${workspaceId}_${projectWorkspacePosition}' value='${project.workspacePosition}'></td>`;
+                    tableLine += `<td><button onclick='updateProject(${workspaceId}, ${projectWorkspacePosition})'>Update</button>`;
+                    tableLine += `<button onclick='deleteProject(${workspaceId}, ${projectWorkspacePosition})'>Delete</button></td>`;
+                    $(`#projectBody_${workspaceId}`).append(`<tr id="projectLine_${workspaceId}_${projectWorkspacePosition}">${tableLine}</tr>`);
+                });
+
+                // console.log($(`#projectBody_${workspaceId}`).html());
+            } else {
+                workspace.projects.forEach(project => {
+                    var projectWorkspacePosition = project.workspacePosition;
+
+                    if ($(`#projectLine_${workspaceId}_${projectWorkspacePosition}`).length > 0) {
+
+                        $(`#projectWorkspaceId_${workspaceId}_${projectWorkspacePosition}`).val(workspaceId);
+                        $(`#projectId_${workspaceId}_${projectWorkspacePosition}`).val(project.id);
+                        $(`#projectName_${workspaceId}_${projectWorkspacePosition}`).val(project.name);
+                        $(`#projectDescription_${workspaceId}_${projectWorkspacePosition}`).val(project.description);
+                        $(`#projectWorkspacePosition_${workspaceId}_${projectWorkspacePosition}`).val(project.workspacePosition);
+
+                    } else {
+
+                        var tableLine = `<tr id="projectLine_${workspaceId}_${projectWorkspacePosition}">`;
+                        tableLine += `<td><input id='projectWorkspaceId_${workspaceId}_${projectWorkspacePosition}' value='${workspaceId}'></td>`;
+                        tableLine +=`<td><input id='projectId_${workspaceId}_${projectWorkspacePosition}' value='${project.id}' readonly></td>`;
+                        tableLine +=`<td><input id='projectName_${workspaceId}_${projectWorkspacePosition}' value='${project.name}'></td>`;
+                        tableLine +=`<td><input id='projectDescription_${workspaceId}_${projectWorkspacePosition}' value='${project.description}'></td>`;
+                        tableLine +=`<td><input id='projectWorkspacePosition_${workspaceId}_${projectWorkspacePosition}' value='${project.workspacePosition}'></td>`;
+                        tableLine +=`<td><button onclick='updateProject(${workspaceId}, ${projectWorkspacePosition})'>Update</button>`;
+                        tableLine +=`<button onclick='deleteProject(${workspaceId}, ${projectWorkspacePosition})'>Delete</button></td>`;
+                        $(`#projectBody_${workspaceId}`).append(`<tr id="projectLine_${workspaceId}_${projectWorkspacePosition}">${tableLine}</tr>`);
+
+                    }
+                });
+
+                // remove others
+                $(`#projectBody_${workspaceId} tr`).each(function () {
+                    var projectWorkspacePosition = this.id.replace(`projectLine_${workspaceId}_`, "");
+
+                    console.log(`Encontrando ${projectWorkspacePosition}`);
+
+                    var matchingProject = workspace.projects.find(project => project.workspacePosition.toString() === projectWorkspacePosition.toString());
+                    if (!matchingProject) {
+                        console.log(this);
+                        $(this).remove();
+                    }
+                });
+            }
+        }
+    });
 }

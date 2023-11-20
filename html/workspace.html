@@ -4,122 +4,130 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Workspace</title>
+	<title>Project</title>
+
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.js"
+	        integrity="sha512-d+dtcSjz831KbYcB3pS7cd3cqlaZ/gbbnZWC4KeLM8AToNtm83Rbc5au5k3bFBh6EwlphOGJtj7oDg6k+NGbPA=="
+	        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
 	<script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+
 
 	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"
 	        integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm"
 	        crossorigin="anonymous"></script>
 	<script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7.0.0/bundles/stomp.umd.min.js"></script>
 
-	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
-	      integrity="sha512-z3gLpd7yknf1YoNbCzqRKc4qyor8gaKU1qmn+CShxbuBusANI9QpRohGBreCFkKxLhei6S9CQXFEbbKuqLg0DA=="
-	      crossorigin="anonymous" referrerpolicy="no-referrer"/>
-
-	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet"
-	      integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
-
-	<link rel="stylesheet" href="../css/workspace.css">
+	<link rel="stylesheet" href="../css/project.css">
 	<script type="text/javascript" src="../js/workspace/workspace.js"></script>
 
 </head>
 
 <body style="padding-top: 70px;">
 
-	<nav class="navbar fixed-top navbar-expand-lg bg-body-tertiary">
+	<nav class="navbar">
 		<div class="container-fluid">
 			<a class="navbar-brand" href="#"></a>
-			<button class="navbar-toggler" type="button" data-bs-toggle="collapse"
-			        data-bs-target="#navbarSupportedContent"
-			        aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-				<span class="navbar-toggler-icon"></span>
-			</button>
-			<div class="collapse navbar-collapse" id="navbarSupportedContent">
-				<ul class="navbar-nav me-auto mb-2 mb-lg-0">
-					<form class="form-inline">
-						<div class="form-group">
-							<label for="connect">WebSocket test connection:</label>
-							<button id="connect" class="btn btn-default" type="button">Connect</button>
-							<button id="disconnect" class="btn btn-default" type="button" disabled="disabled">Disconnect
-							</button>
-						</div>
-					</form>
-				</ul>
-				<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">
-					Criar Nova Área de Trabalho
-				</button>
-			</div>
+			<div class="navbar-toggler" id="navbarToggler">&#9776;</div>
+			<!--
+			<ul class="navbar-nav" id="navbarNav">
+			  <li class="nav-item">
+				<form class="form-inline">
+				  <div class="form-group">
+					<label for="connect">WebSocket test connection:</label>
+					<button id="connect" class="btn" type="submit">Connect</button>
+					<button id="disconnect" class="btn" type="submit" disabled="disabled">Disconnect</button>
+				  </div>
+				</form>
+			  </li>
+			</ul>
+	  -->
+			<button type="button" class="btn btn-primary" id="createProject">Criar Novo Projeto</button>
 		</div>
 	</nav>
 
-	<div id="mensagemSucesso" class="alert alert-success" style="display: none;">
-		Área de trabalho criada com sucesso!
-	</div>
+	<div id="main">
+		<div class="container">
 
-	<!-- Modal Criar Area de Trabalho -->
-	<div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-		<div class="modal-dialog">
-			<div class="modal-content">
-				<div class="modal-header">
-					<h1 class="modal-title fs-5" id="exampleModalLabel">Criar Nova Área de Trabalho</h1>
-					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+			<div class="project_card">
+				<div class="project_card_header">
+					<h1 id="projectName">titulo_aqui</h1>
 				</div>
-				<div class="modal-body">
-					<form>
-						<div class="mb-3">
-							<label for="workspaceNameNewProject" class="form-label">Nome:</label>
-							<input type="text" class="form-control" id="workspaceNameNewProject">
+				<div class="list-container">
+					<div class="list">
+						<div class="title removable editable">Catalogo 1</div>
+						<div class="content">
+							<div class="card removable editable">Card 1</div>
+							<div class="card removable editable">Card 2</div>
+							<div class="card removable editable">Card 3</div>
+							<div class="card removable editable">Card 4</div>
+							<div class="card removable editable">Card 5</div>
 						</div>
-						<div class="mb-3">
-							<label for="workspaceDescriptionNewProject" class="form-label">Descrição:</label>
-							<input type="text" class="form-control" id="workspaceDescriptionNewProject">
+						<div class="add-card editable">+ Adicionar novo card</div>
+					</div>
+
+					<div class="list">
+						<div class="title removable editable">Catalogo 2</div>
+						<div class="content">
+							<div class="card removable editable">Card 1</div>
 						</div>
-					</form>
-				</div>
-				<div class="modal-footer">
-					<button type="submit" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
-					<button id="workspaceInsert" type="submit" class="btn btn-primary">Criar</button>
+						<div class="add-card editable">+ Adicionar novo card</div>
+					</div>
+
+					<div class="list">
+						<div class="title removable editable">Catalogo 3</div>
+						<div class="content"></div>
+						<div class="add-card editable">+ Adicionar novo card</div>
+					</div>
+
+					<div class="add-list">
+						<div class="title editable">+ Adicionar novo catálogo</div>
+					</div>
 				</div>
 			</div>
-		</div>
-	</div>
 
-
-	<!-- Modal Inserir Usuario Area de Trabalho -->
-	<div class="modal fade" id="exampleModalUser" tabindex="-1" aria-labelledby="exampleModalUserLabel" aria-hidden="true">
-		<div class="modal-dialog">
-			<div class="modal-content">
-				<div class="modal-header">
-					<h1 class="modal-title fs-5" id="exampleModalUserLabel">Adicionar Novo Usuário</h1>
-					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+			<div class="project_card">
+				<div class="project_card_header">
+					<h1>titulo_aqui</h1>
 				</div>
-				<div class="modal-body">
-					<form>
-						<div class="mb-3">
-							<label for="workspaceNameNewUser" class="form-label">Nome Usuário:</label>
-							<input type="text" class="form-control" id="workspaceNameNewUser">
+				<div class="list-container">
+					<div class="list">
+						<div class="title removable editable">Catalogo 1</div>
+						<div class="content">
+							<div class="card removable editable">Card 1</div>
+							<div class="card removable editable">Card 2</div>
+							<div class="card removable editable">Card 3</div>
+							<div class="card removable editable">Card 4</div>
+							<div class="card removable editable">Card 5</div>
 						</div>
-					</form>
-				</div>
-				<div class="modal-footer">
-					<button type="submit" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
-					<button id="workspaceInsertUser" type="submit" class="btn btn-primary">Adicionar</button>
+						<div class="add-card editable">+ Adicionar novo card</div>
+					</div>
+
+					<div class="list">
+						<div class="title removable editable">Catalogo 2</div>
+						<div class="content">
+							<div class="card removable editable">Card 1</div>
+						</div>
+						<div class="add-card editable">+ Adicionar novo card</div>
+					</div>
+
+					<div class="list">
+						<div class="title removable editable">Catalogo 3</div>
+						<div class="content"></div>
+						<div class="add-card editable">+ Adicionar novo card</div>
+					</div>
+
+					<div class="add-list">
+						<div class="title editable">+ Adicionar novo catálogo</div>
+					</div>
 				</div>
 			</div>
+
+
 		</div>
 	</div>
-
-
-	<div id="workspaces_teste"></div>
-
-	<div class="row">
-		<div id="tables" class="col-md-12">
-		</div>
-	</div>
-
+	<script type="text/javascript" src="../js/workspace/workspaceUI.js"></script>
 </body>
 
 </html>

@@ -24,12 +24,14 @@ function login() {
         .then(response => response.json())
         .then(json => {
             const userId = json.id;
-            window.location.href = `workspace.html?userId=${userId}`;
+            if (userId != null) {
+                sessionStorage.setItem("userId", userId);
+                window.location.href = 'list_workspace.html';
+            }
         })
         .catch(error => console.log('error', error));
 }
 
 function register() {
-    const url = `user_registration.html`;
-    window.location.href = url;
+    window.location.href = 'user_register.html';
 }

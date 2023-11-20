@@ -1,8 +1,8 @@
 $(function () {
-    $('#submit_user_registration').click(() => register());
+    $('#submit_user_registration').click(() => user_register());
 });
 
-function register() {
+function user_register() {
 
     let obj = {
         name: nome_user_registration.value,
@@ -24,8 +24,9 @@ function register() {
         .then(response => response.json())
         .then(json => {
             const userId = json.id;
-            if(userId != null){
-                window.location.href = `workspace.html?userId=${userId}`;
+            if (userId != null) {
+                sessionStorage.setItem("userId", userId);
+                window.location.href = `list_workspace.html`;
             }
             // mensagem de erro para o usuário
         })
