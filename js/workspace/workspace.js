@@ -60,7 +60,7 @@ function showProjects(workspace) {
             // reescreve os dados do projeto para aquela posição
             if ($(`#project_${position}`).length > 0) {
                 $(`#project_${position} #header #project_name`).text(project.name);
-                $(`#project_${position}`).data("backendId", project.id);
+                $(`#project_${position}`).attr("backendId", project.id);
 
                 showCatalogs(project, position);
 
@@ -107,7 +107,7 @@ function showCatalogs(project, projectPosition) {
         // reescreve os dados do catálogo para aquela posição
         if ($(`#project_${projectPosition} #list_catalog #catalog_${position}`).length > 0) {
             $(`#project_${projectPosition} #list_catalog #catalog_${position} #catalog_name`).text(catalog.name);
-            $(`#project_${projectPosition} #list_catalog #catalog_${position}`).data("backendId", catalog.id);
+            $(`#project_${projectPosition} #list_catalog #catalog_${position}`).attr("backendId", catalog.id);
 
             showCards(catalog, projectPosition, position);
 
@@ -152,11 +152,10 @@ function showCards(catalog, projectPosition, catalogPosition) {
         // reescreve os dados do cartão para aquela posição
         if ($(`#project_${projectPosition} #list_catalog #catalog_${catalogPosition} #list_card #card_${position}`).length > 0) {
             $(`#project_${projectPosition} #list_catalog #catalog_${catalogPosition} #list_card #card_${position}`).text(card.name);
-            $(`#project_${projectPosition} #list_catalog #catalog_${position} #list_card #card_${position}`).data("backendId", card.id);
+            $(`#project_${projectPosition} #list_catalog #catalog_${catalogPosition} #list_card #card_${position}`).attr("backendId", card.id);
 
             // cria novo cartão no final
         } else {
-            // $(`#project_${projectPosition} #list_catalog #catalog_${catalogPosition} #insert_card`).remove();
             const divCard = `<div class="card removable editable" id="card_${position}" backendId="${card.id}">${card.name}</div>`;
             $(`#project_${projectPosition} #list_catalog #catalog_${catalogPosition} #list_card`).append(divCard);
 
@@ -199,11 +198,11 @@ function insertProject() {
     alertCreated('Projeto criado com sucesso!');
 }
 
-function insertCatalog(projectId) {
+function insertCatalog(projectId, catalogName) {
     const socketPub = `/app/workspace/${workspaceId}/project/catalog.add`;
-        stompClient.publish({
+    stompClient.publish({
         destination: socketPub, body: JSON.stringify({
-            'name': $("#newCatalogName").val(),
+            'name': catalogName,
             'idProject': projectId,
             'projectPosition': -1
         })
@@ -256,7 +255,6 @@ function insertCard(catalogId, cardName, cardDescription) {
 
 // DRAG AND DROP FEATURES
 function initCard() {
-    console.log("initCard")
     const dropzones = document.querySelectorAll('.content');
     dropzones.forEach(item => {
         new Sortable(item, {
@@ -270,7 +268,6 @@ function initCard() {
 
 // for test only
 function initCatalog() {
-    console.log("initCatalog")
     const dropzones = document.querySelectorAll('.list-container');
     dropzones.forEach(item => {
         new Sortable(item, {
@@ -283,7 +280,6 @@ function initCatalog() {
 }
 
 function inputBlurHandler() {
-    console.log("inputBlurHandler")
     this.classList.add('inactive');
     this.disabled = true;
     this.classList.remove('active');
@@ -291,7 +287,6 @@ function inputBlurHandler() {
 }
 
 function bodyClickHandler(e) {
-    console.log("bodyClickHandler")
     elMouseLeaveHandler(e);
     const el = e.target;
     const isCard = el.classList.contains('card');
@@ -323,7 +318,6 @@ function bodyClickHandler(e) {
 }
 
 function elKeypressHandler(e) {
-    console.log("elKeypressHandler")
     if (e.keyCode === 13) { // 13 = Enter key
         e.preventDefault();
         e.target.blur();
@@ -340,30 +334,31 @@ function elKeypressHandler(e) {
 }
 
 function elBlurHandler(e) {
-    console.log("elBlurHandler")
     const el = e.target;
     el.contentEditable = false;
     el.classList.remove('editing');
 
     if (el.classList.contains('pending')) {
         el.className = 'card removable editable';
-        // insere id (position)
-        el.id = `card_${el.parentNode.querySelector('.content').children.length+1}`;
+
+        // insere id (card_<last_position>)
+        el.id = `card_${el.parentNode.querySelector('.content').children.length + 1}`;
 
         // recupera catalogId que o card está inserido
-        const catalogId = el.parentNode.parentNode.querySelector('.list').getAttribute('backendId');
+        const catalogId = el.parentNode.getAttribute('backendId');
 
         // recupera texto do card
         const cardName = el.innerText;
 
-        // envia informação para o banco de dados
-        insertCard(catalogId, cardName, '');
-
         const newEl = document.createElement('div');
         newEl.className = 'add-card editable';
+        newEl.id = 'insert_card';
         newEl.appendChild(document.createTextNode('+ Adicionar novo card'));
         el.parentNode.appendChild(newEl);
         el.parentNode.querySelector('.content').appendChild(el);
+
+        // envia informação para o banco de dados
+        insertCard(catalogId, cardName, '');
     }
 
     if (el.parentElement.className === 'list initial') {
@@ -372,14 +367,27 @@ function elBlurHandler(e) {
 
     if (el.parentElement.className === 'list pending') {
         el.parentElement.className = 'list';
+
+        //insere id (catalog_<last_position>)
+        el.parentElement.id = `catalog_${el.parentNode.parentNode.children.length}`
+
+        // recupera projectId que o card está inserido
+        const projectId = el.parentElement.parentNode.parentNode.getAttribute('backendId');
+
+        // recupera texto do card
+        const catalogName = el.innerText;
+
         el.className = 'title removable editable';
+
         const newContent = document.createElement('div');
         newContent.className = 'content';
+        newContent.id = 'list_card';
 
         el.parentElement.appendChild(newContent);
 
         const newEl = document.createElement('div');
         newEl.className = 'add-card editable';
+        newEl.id = 'insert_card';
         newEl.appendChild(document.createTextNode('+ Adicionar novo card'));
         el.parentNode.appendChild(newEl);
 
@@ -387,18 +395,21 @@ function elBlurHandler(e) {
 
         const addList = document.createElement('div');
         addList.className = 'add-list';
+        addList.id = 'insert_catalog'
         const title = document.createElement('div');
         title.className = 'title editable';
         title.appendChild(document.createTextNode('+ Adicionar novo catálogo'));
         addList.appendChild(title);
         el.parentElement.parentElement.appendChild(addList);
+
+        // envia informação para o banco de dados
+        insertCatalog(projectId, catalogName);
     }
 
     initDelete();
 }
 
 function initDelete() {
-    console.log("initDelete")
     const editables = document.querySelectorAll('.editable');
     editables.forEach(item => {
         item.addEventListener('mouseenter', elMouseEnterHandler);
@@ -407,7 +418,6 @@ function initDelete() {
 }
 
 function elMouseEnterHandler(e) {
-    console.log("elMouseEnterHandler")
     const el = e.target;
     const isRemovable = el.classList.contains('removable');
 
@@ -422,13 +432,11 @@ function elMouseEnterHandler(e) {
 }
 
 function elMouseLeaveHandler(e) {
-    console.log("elMouseLeaveHandler")
     const del = e.target.querySelector('span');
     if (del) e.target.removeChild(del);
 }
 
 function deleteHandler(e) {
-    console.log("deleteHandler")
     const parent = e.target.parentElement;
 
     if (parent.classList.contains('card')) {
@@ -477,7 +485,6 @@ function workspaceUI() {
 
 $(function () {
     $('#createProject').click(() => insertProject());
-    $('#createCatalog').click(() => insertCatalog());
 });
 
 // Obtem o valor do parâmetro 'id'
