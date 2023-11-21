@@ -200,7 +200,7 @@ function insertProject() {
 
 function insertCatalog(projectId, catalogName) {
     const socketPub = `/app/workspace/${workspaceId}/project/catalog.add`;
-        stompClient.publish({
+    stompClient.publish({
         destination: socketPub, body: JSON.stringify({
             'name': catalogName,
             'idProject': projectId,
@@ -255,7 +255,6 @@ function insertCard(catalogId, cardName, cardDescription) {
 
 // DRAG AND DROP FEATURES
 function initCard() {
-    console.log("initCard")
     const dropzones = document.querySelectorAll('.content');
     dropzones.forEach(item => {
         new Sortable(item, {
@@ -269,7 +268,6 @@ function initCard() {
 
 // for test only
 function initCatalog() {
-    console.log("initCatalog")
     const dropzones = document.querySelectorAll('.list-container');
     dropzones.forEach(item => {
         new Sortable(item, {
@@ -282,7 +280,6 @@ function initCatalog() {
 }
 
 function inputBlurHandler() {
-    console.log("inputBlurHandler")
     this.classList.add('inactive');
     this.disabled = true;
     this.classList.remove('active');
@@ -290,7 +287,6 @@ function inputBlurHandler() {
 }
 
 function bodyClickHandler(e) {
-    console.log("bodyClickHandler")
     elMouseLeaveHandler(e);
     const el = e.target;
     const isCard = el.classList.contains('card');
@@ -322,7 +318,6 @@ function bodyClickHandler(e) {
 }
 
 function elKeypressHandler(e) {
-    console.log("elKeypressHandler")
     if (e.keyCode === 13) { // 13 = Enter key
         e.preventDefault();
         e.target.blur();
@@ -339,7 +334,6 @@ function elKeypressHandler(e) {
 }
 
 function elBlurHandler(e) {
-    console.log("elBlurHandler")
     const el = e.target;
     el.contentEditable = false;
     el.classList.remove('editing');
@@ -348,16 +342,13 @@ function elBlurHandler(e) {
         el.className = 'card removable editable';
 
         // insere id (card_<last_position>)
-        el.id = `card_${el.parentNode.querySelector('.content').children.length+1}`;
+        el.id = `card_${el.parentNode.querySelector('.content').children.length + 1}`;
 
         // recupera catalogId que o card está inserido
-        const catalogId = el.parentNode.parentNode.querySelector('.list').getAttribute('backendId');
+        const catalogId = el.parentNode.getAttribute('backendId');
 
         // recupera texto do card
         const cardName = el.innerText;
-
-        // envia informação para o banco de dados
-        insertCard(catalogId, cardName, '');
 
         const newEl = document.createElement('div');
         newEl.className = 'add-card editable';
@@ -365,6 +356,9 @@ function elBlurHandler(e) {
         newEl.appendChild(document.createTextNode('+ Adicionar novo card'));
         el.parentNode.appendChild(newEl);
         el.parentNode.querySelector('.content').appendChild(el);
+
+        // envia informação para o banco de dados
+        insertCard(catalogId, cardName, '');
     }
 
     if (el.parentElement.className === 'list initial') {
@@ -377,19 +371,17 @@ function elBlurHandler(e) {
         //insere id (catalog_<last_position>)
         el.parentElement.id = `catalog_${el.parentNode.parentNode.children.length}`
 
-        el.className = 'title removable editable';
-
         // recupera projectId que o card está inserido
         const projectId = el.parentElement.parentNode.parentNode.getAttribute('backendId');
 
         // recupera texto do card
         const catalogName = el.innerText;
 
-        // envia informação para o banco de dados
-        insertCatalog(projectId, catalogName);
+        el.className = 'title removable editable';
 
         const newContent = document.createElement('div');
         newContent.className = 'content';
+        newContent.id = 'list_card';
 
         el.parentElement.appendChild(newContent);
 
@@ -409,13 +401,15 @@ function elBlurHandler(e) {
         title.appendChild(document.createTextNode('+ Adicionar novo catálogo'));
         addList.appendChild(title);
         el.parentElement.parentElement.appendChild(addList);
+
+        // envia informação para o banco de dados
+        insertCatalog(projectId, catalogName);
     }
 
     initDelete();
 }
 
 function initDelete() {
-    console.log("initDelete")
     const editables = document.querySelectorAll('.editable');
     editables.forEach(item => {
         item.addEventListener('mouseenter', elMouseEnterHandler);
@@ -424,7 +418,6 @@ function initDelete() {
 }
 
 function elMouseEnterHandler(e) {
-    console.log("elMouseEnterHandler")
     const el = e.target;
     const isRemovable = el.classList.contains('removable');
 
@@ -439,13 +432,11 @@ function elMouseEnterHandler(e) {
 }
 
 function elMouseLeaveHandler(e) {
-    console.log("elMouseLeaveHandler")
     const del = e.target.querySelector('span');
     if (del) e.target.removeChild(del);
 }
 
 function deleteHandler(e) {
-    console.log("deleteHandler")
     const parent = e.target.parentElement;
 
     if (parent.classList.contains('card')) {
