@@ -14,11 +14,12 @@ stompClient.onStompError = (frame) => {
 stompClient.onConnect = (frame) => {
     console.log(`Connected: ${frame}`);
 
-    stompClient.subscribe(`/topic/user/${userId}/workspace.list`, (user) => {
+    const socketSub = `/topic/user/${userId}/workspace.list`;
+    stompClient.subscribe(socketSub, (user) => {
+        console.log(`RESPONSE FROM: ${socketSub}`);
         showWorkspaces(JSON.parse(user.body));
     });
-    console.log(`SUBSCRIBED: /topic/user/${userId}/workspace.list`);
-
+    console.log(`SUBSCRIBED: ${socketSub}`);
 
     var requestOptions = {
         method: 'GET',
@@ -47,11 +48,13 @@ function alertWorkspaceCreated() {
 }
 
 function insertWorkspace() {
+    const socketPub = `/app/user/${userId}/workspace.add`;
     stompClient.publish({
-        destination: `/app/user/${userId}/workspace.add`, body: JSON.stringify({
+        destination: socketPub, body: JSON.stringify({
             'name': $("#workspaceNameNewProject").val(), 'description': $("#workspaceDescriptionNewProject").val()
         })
     });
+    console.log(`PUB: ${socketPub}`);
     alertWorkspaceCreated();
 }
 
@@ -67,10 +70,12 @@ function addUserWorkspace(rowId, userName) {
 }
 
 function updateWorkspace(id, name, description) {
+    const socketPub = `/app/user/${userId}/workspace.update/${id}`;
     stompClient.publish({
-        destination: `/app/user/${userId}/workspace.update/${id}`,
+        destination: socketPub,
         body: JSON.stringify({'name': name, 'description': description})
     });
+    console.log(`PUB: ${socketPub}`);
 }
 
 function deleteWorkspace(id) {
@@ -103,12 +108,12 @@ function showWorkspaces(user) {
                 <div class="workspace_header">
                   <h2 class="workspace_title" contenteditable="false">
                     ${workspaces.workspace.name}
+                  </h2>
                     <a>
                         <i id="${`addUser_${rowId}`}" class="addUserIcon fa-solid fa-user-plus" data-row-id="${rowId}"></i>
                         <i id="${`pencil_${rowId}`}" class="pencilIcon fa fa-pencil pencil-link" data-row-id="${rowId}"></i>
                         <i id="${`trash_${rowId}`}" class="trashIcon fa fa-trash trash-link" data-row-id="${rowId}"></i>
                     </a>
-                  </h2>
                 </div>
                 <div class="workspace_card_body" contenteditable="false">
                   <p class="workspace_description">${workspaces.workspace.description}</p>
@@ -178,8 +183,9 @@ function showWorkspaces(user) {
                     if (!isEditable) {
                         titleElement.addEventListener('blur', function () {
                             // Obtém os novos dados
-                            const name = this.textContent;
-                            const description = descriptionElement.textContent;
+                            const name = $(".workspace_title").text();
+                            const description = '';
+
 
                             // Chama a função updateWorkspace com o ID do elemento clicado e os novos dados
                             updateWorkspace(rowId, name, description);
@@ -191,7 +197,6 @@ function showWorkspaces(user) {
             const deleteIcons = document.querySelectorAll('.trashIcon');
             deleteIcons.forEach(icon => {
                 icon.addEventListener('click', function () {
-                    console.log("ENTROU");
                     deleteWorkspace(this.getAttribute('data-row-id'));
                 });
             });
@@ -206,7 +211,6 @@ function goToWorkspacePage(event, workspaceId) {
 
 $(function () {
     $("#workspaceInsert").click(() => insertWorkspace());
-    $(".update-btn").click(() => updateWorkspace());
 });
 
 const userId = sessionStorage.getItem("userId");
