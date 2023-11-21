@@ -245,13 +245,32 @@ function insertCard(catalogId, cardName, cardDescription) {
 //     });
 // }
 
-// function deleteProject(workspaceId, projectWorkspacePosition) {
-//     var projectId = $(`#projectId_${workspaceId}_${projectWorkspacePosition}`).val();
-//     console.log(`Deleting project ${projectId}`);
-//     stompClient.publish({
-//         destination: `/app/workspace/${workspaceId}/project.delete/${projectId}`
-//     });
-// }
+function deleteProject(projectId) {
+    const socketPub = `/app/workspace/${workspaceId}/project.delete/${projectId}`
+    stompClient.publish({
+        destination: socketPub
+    });
+    console.log(`PUB: ${socketPub}`);
+    alertCreated('Projeto excluido com sucesso!');
+}
+
+function deleteCatalog(catalogId) {
+    const socketPub = `/app/workspace/${workspaceId}/project/catalog.delete/${catalogId}`
+    stompClient.publish({
+        destination: socketPub
+    });
+    console.log(`PUB: ${socketPub}`);
+    alertCreated('Catálogo excluido com sucesso!');
+}
+
+function deleteCard(cardId) {
+    const socketPub = `/app/workspace/${workspaceId}/project/catalog/card.delete/${cardId}`
+    stompClient.publish({
+        destination: socketPub
+    });
+    console.log(`PUB: ${socketPub}`);
+    alertCreated('Cartão excluido com sucesso!');
+}
 
 // DRAG AND DROP FEATURES
 function initCard() {
@@ -440,11 +459,40 @@ function deleteHandler(e) {
     const parent = e.target.parentElement;
 
     if (parent.classList.contains('card')) {
+
+        const catalogPosition = parent.parentElement.parentElement.id.substring(8);
+        const projectPosition = parent.parentElement.parentElement.parentElement.parentElement.id.substring(8);
+
+        const cardsCount = parent.parentElement.children.length;
+
+        let nextPosition = parseInt(parent.id.substring(5)) + 1;
+
         parent.parentElement.removeChild(parent);
+
+        while (nextPosition <= cardsCount) {
+            $(`#project_${projectPosition} #list_catalog #catalog_${catalogPosition} #list_card #card_${nextPosition}`).attr('id', `card_${nextPosition - 1}`);
+            nextPosition++;
+        }
+
+        deleteCard(parent.getAttribute('backendId'));
     }
 
     if (parent.classList.contains('title')) {
+
+        const projectPosition = parent.parentElement.parentElement.parentElement.id.substring(8);
+
+        const catalogCount = parent.parentElement.parentElement.children.length - 1;
+
+        let nextPosition = parseInt(parent.parentElement.id.substring(8)) + 1;
+
         parent.parentElement.parentElement.removeChild(parent.parentElement);
+
+        while (nextPosition <= catalogCount) {
+            $(`#project_${projectPosition} #list_catalog #catalog_${nextPosition}`).attr('id', `catalog_${nextPosition - 1}`);
+            nextPosition++;
+        }
+
+        deleteCatalog(parent.parentElement.getAttribute('backendId'));
     }
 }
 
