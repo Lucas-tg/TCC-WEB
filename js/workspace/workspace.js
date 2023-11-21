@@ -4,11 +4,13 @@ const stompClient = new StompJs.Client({
 
 stompClient.onWebSocketError = (error) => {
     console.error('Error with websocket', error);
+    alert("Problema de conexão");
 };
 
 stompClient.onStompError = (frame) => {
     console.error(`Broker reported error: ${frame.headers['message']}`);
     console.error(`Additional details: ${frame.body}`);
+    alert("Problema de conexão");
 };
 
 stompClient.onConnect = (frame) => {
@@ -170,17 +172,17 @@ function showCards(catalog, projectPosition, catalogPosition) {
     }
 }
 
-function alertCreated(message) {
-    $(`#sucessAlert`).text(message);
+function alert(message) {
+    $(`#alert`).text(message);
     // Mostrar a mensagem de sucesso
-    document.getElementById('sucessAlert').style.display = 'block';
+    document.getElementById('alert').style.display = 'block';
 
     // Fechar o modal
     $('#createProjectModal').modal('hide');
 
     // Ocultar a mensagem de sucesso após 3 segundos (3000 milissegundos)
     setTimeout(function () {
-        document.getElementById('sucessAlert').style.display = 'none';
+        document.getElementById('alert').style.display = 'none';
     }, 3000); // 3 segundos (3000 ms)
 }
 
@@ -195,7 +197,7 @@ function insertProject() {
         })
     });
     console.log(`PUB: ${socketPub}`);
-    alertCreated('Projeto criado com sucesso!');
+    alert('Projeto criado com sucesso!');
 }
 
 function insertCatalog(projectId, catalogName) {
@@ -208,7 +210,7 @@ function insertCatalog(projectId, catalogName) {
         })
     });
     console.log(`PUB: ${socketPub}`);
-    alertCreated('Catálogo criado com sucesso!');
+    alert('Catálogo criado com sucesso!');
 }
 
 function insertCard(catalogId, cardName, cardDescription) {
@@ -222,7 +224,7 @@ function insertCard(catalogId, cardName, cardDescription) {
         })
     });
     console.log(`PUB: ${socketPub}`);
-    alertCreated('Cartão criado com sucesso!');
+    alert('Cartão criado com sucesso!');
 }
 
 // function updateProject(oldWorkspaceId, oldWorkspacePosition) {
@@ -251,7 +253,7 @@ function deleteProject(projectId) {
         destination: socketPub
     });
     console.log(`PUB: ${socketPub}`);
-    alertCreated('Projeto excluido com sucesso!');
+    alert('Projeto excluido com sucesso!');
 }
 
 function deleteCatalog(catalogId) {
@@ -260,7 +262,7 @@ function deleteCatalog(catalogId) {
         destination: socketPub
     });
     console.log(`PUB: ${socketPub}`);
-    alertCreated('Catálogo excluido com sucesso!');
+    alert('Catálogo excluido com sucesso!');
 }
 
 function deleteCard(cardId) {
@@ -269,7 +271,7 @@ function deleteCard(cardId) {
         destination: socketPub
     });
     console.log(`PUB: ${socketPub}`);
-    alertCreated('Cartão excluido com sucesso!');
+    alert('Cartão excluido com sucesso!');
 }
 
 // DRAG AND DROP FEATURES
@@ -287,8 +289,10 @@ function initCard() {
 
 // for test only
 function initCatalog() {
+    console.log("initCatalog")
     const dropzones = document.querySelectorAll('.list-container');
     dropzones.forEach(item => {
+        console.log(item)
         new Sortable(item, {
             group: 'list',
             sort: true,
@@ -509,10 +513,7 @@ function workspaceUI() {
     });
 
     initCard();
-
-    document.addEventListener('DOMContentLoaded', function () {
-        initCatalog();
-    });
+    initCatalog();
 
     const inputs = document.querySelectorAll('textarea');
 
