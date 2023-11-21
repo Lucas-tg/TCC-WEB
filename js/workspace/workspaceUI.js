@@ -1,14 +1,3 @@
-const main = document.querySelector('#main');
-
-const list = new Sortable(main, {
-  group: 'list',
-  sort: true,
-  filter: '.add-card',
-  draggable: '.list',
-  ghostClass: "ghost",
-  dragoverBubble: true,
-});
-
 function initContent() {
   const dropzones = document.querySelectorAll('.content');
   dropzones.forEach(item => {
@@ -20,8 +9,6 @@ function initContent() {
     });
   });
 }
-
-initContent();
 
 // for test only
 function initContent2() {
@@ -36,26 +23,12 @@ function initContent2() {
   });
 }
 
-document.addEventListener('DOMContentLoaded', function () {
-  initContent2();
-});
-
-const inputs = document.querySelectorAll('textarea');
-
-inputs.forEach(item => {
-  item.addEventListener('blur', inputBlurHandler);
-});
-
 function inputBlurHandler() {
   this.classList.add('inactive');
   this.disabled = true;
   this.classList.remove('active');
   list.option('disabled', false);
 }
-
-const body = document.querySelector('body');
-
-body.addEventListener('click', bodyClickHandler);
 
 function bodyClickHandler(e) {
   elMouseLeaveHandler(e);
@@ -157,8 +130,6 @@ function initDelete() {
   });
 }
 
-initDelete();
-
 function elMouseEnterHandler(e) {
   const el = e.target;
   const isRemovable = el.classList.contains('removable');
@@ -190,6 +161,35 @@ function deleteHandler(e) {
   }
 }
 
+const main = document.querySelector('#main');
+
+const list = new Sortable(main, {
+  group: 'list',
+  sort: true,
+  filter: '.add-card',
+  draggable: '.list',
+  ghostClass: "ghost",
+  dragoverBubble: true,
+});
+
+initContent();
+
+document.addEventListener('DOMContentLoaded', function () {
+  initContent2();
+});
+
+const inputs = document.querySelectorAll('textarea');
+
+inputs.forEach(item => {
+  item.addEventListener('blur', inputBlurHandler);
+});
+
+const body = document.querySelector('body');
+
+body.addEventListener('click', bodyClickHandler);
+
+
+initDelete();
 document.getElementById('navbarToggler').addEventListener('click', function () {
   var navbarNav = document.getElementById('navbarNav');
   navbarNav.style.display = (navbarNav.style.display === 'flex' || navbarNav.style.display === '') ? 'none' : 'flex';
