@@ -245,13 +245,32 @@ function insertCard(catalogId, cardName, cardDescription) {
 //     });
 // }
 
-// function deleteProject(workspaceId, projectWorkspacePosition) {
-//     var projectId = $(`#projectId_${workspaceId}_${projectWorkspacePosition}`).val();
-//     console.log(`Deleting project ${projectId}`);
-//     stompClient.publish({
-//         destination: `/app/workspace/${workspaceId}/project.delete/${projectId}`
-//     });
-// }
+function deleteProject(projectId) {
+    const socketPub = `/app/workspace/${workspaceId}/project.delete/${projectId}`
+    stompClient.publish({
+        destination: socketPub
+    });
+    console.log(`PUB: ${socketPub}`);
+    alertCreated('Projeto excluido com sucesso!');
+}
+
+function deleteCatalog(catalogId) {
+    const socketPub = `/app/workspace/${workspaceId}/project/catalog.delete/${catalogId}`
+    stompClient.publish({
+        destination: socketPub
+    });
+    console.log(`PUB: ${socketPub}`);
+    alertCreated('Catálogo excluido com sucesso!');
+}
+
+function deleteCard(cardId) {
+    const socketPub = `/app/workspace/${workspaceId}/project/catalog/card.delete/${cardId}`
+    stompClient.publish({
+        destination: socketPub
+    });
+    console.log(`PUB: ${socketPub}`);
+    alertCreated('Cartão excluido com sucesso!');
+}
 
 // DRAG AND DROP FEATURES
 function initCard() {
@@ -440,7 +459,25 @@ function deleteHandler(e) {
     const parent = e.target.parentElement;
 
     if (parent.classList.contains('card')) {
+
+        const catalogPosition = parent.parentElement.parentElement.id.substring(8);
+        const projectPosition = parent.parentElement.parentElement.parentElement.parentElement.id.substring(8);
+
+        const cardsCount = parent.parentElement.children.length;
+
+        let position = parseInt(parent.id.substring(5));
+
         parent.parentElement.removeChild(parent);
+
+        console.log(position)
+        console.log(cardsCount)
+        while (position <= cardsCount) {
+            console.log(position)
+            $(`#project_${projectPosition} #list_catalog #catalog_${catalogPosition} #list_card #card_${position}`).attr('id', `card_${position-1}`);
+            position++;
+        }
+
+        deleteCard(parent.getAttribute('backendId'));
     }
 
     if (parent.classList.contains('title')) {
