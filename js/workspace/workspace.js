@@ -465,23 +465,34 @@ function deleteHandler(e) {
 
         const cardsCount = parent.parentElement.children.length;
 
-        let position = parseInt(parent.id.substring(5));
+        let nextPosition = parseInt(parent.id.substring(5)) + 1;
 
         parent.parentElement.removeChild(parent);
 
-        console.log(position)
-        console.log(cardsCount)
-        while (position <= cardsCount) {
-            console.log(position)
-            $(`#project_${projectPosition} #list_catalog #catalog_${catalogPosition} #list_card #card_${position}`).attr('id', `card_${position-1}`);
-            position++;
+        while (nextPosition <= cardsCount) {
+            $(`#project_${projectPosition} #list_catalog #catalog_${catalogPosition} #list_card #card_${nextPosition}`).attr('id', `card_${nextPosition - 1}`);
+            nextPosition++;
         }
 
         deleteCard(parent.getAttribute('backendId'));
     }
 
     if (parent.classList.contains('title')) {
+
+        const projectPosition = parent.parentElement.parentElement.parentElement.id.substring(8);
+
+        const catalogCount = parent.parentElement.parentElement.children.length - 1;
+
+        let nextPosition = parseInt(parent.parentElement.id.substring(8)) + 1;
+
         parent.parentElement.parentElement.removeChild(parent.parentElement);
+
+        while (nextPosition <= catalogCount) {
+            $(`#project_${projectPosition} #list_catalog #catalog_${nextPosition}`).attr('id', `catalog_${nextPosition - 1}`);
+            nextPosition++;
+        }
+
+        deleteCatalog(parent.parentElement.getAttribute('backendId'));
     }
 }
 
