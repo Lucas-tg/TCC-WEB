@@ -343,7 +343,6 @@ function initCatalog() {
 
                 // atualiza todas as posições de catalogos do novo projeto (card_<position>)
                 position = 1;
-                console.log(event.item)
                 $(`#project_${newProjectPosition} #list_catalog div[class^=list]`)
                     .each(function () {
                         $(this).attr('id', `catalog_${position}`);
@@ -358,7 +357,6 @@ function initCatalog() {
                         position++;
                     });
 
-                console.log(catalogs)
                 updateCatalogs(catalogs);
             }
         });
