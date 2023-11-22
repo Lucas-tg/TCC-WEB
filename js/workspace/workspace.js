@@ -301,6 +301,70 @@ function deleteCard(cardId) {
     alert('Cartão excluido com sucesso!');
 }
 
+function initCatalog() {
+    const dropzones = document.querySelectorAll('.list-container');
+    dropzones.forEach(item => {
+        new Sortable(item, {
+            group: 'list',
+            sort: true,
+            filter: '.add-list',
+            draggable: '.list',
+            ghostClass: "ghost",
+
+            // catálogo movido
+            onEnd: function (event) {
+
+                const oldProjectPosition = event.from.parentElement.id.substring(8);
+                const newProjectPosition = event.to.parentElement.id.substring(8);
+
+                let position;
+                let catalogs = [];
+
+                // movido entre projetos diferentes
+                if (oldProjectPosition !== newProjectPosition) {
+
+                    position = 1;
+                    // atualiza todas as posições de catalogos do antigo projeto (catalog_<position>)
+                    $(`#project_${oldProjectPosition} #list_catalog div[id^=catalog]`)
+                        .each(function () {
+                            $(this).attr('id', `catalog_${position}`);
+                            let catalog = {
+                                'id': $(this).attr('backendId'),
+                                'name': $(this).text(),
+                                'description': '',
+                                'idProject': $(`#project_${oldProjectPosition}`).attr('backendId'),
+                                'projectPosition': position
+                            }
+                            catalogs.push(catalog);
+                            position++;
+                        });
+
+                }
+
+                // atualiza todas as posições de catalogos do novo projeto (card_<position>)
+                position = 1;
+                console.log(event.item)
+                $(`#project_${newProjectPosition} #list_catalog div[class^=list]`)
+                    .each(function () {
+                        $(this).attr('id', `catalog_${position}`);
+                        let catalog = {
+                            'id': $(this).attr('backendId'),
+                            'name': $(this).children('#catalog_name').text(),
+                            'description': '',
+                            'idProject': $(`#project_${newProjectPosition}`).attr('backendId'),
+                            'projectPosition': position
+                        }
+                        catalogs.push(catalog);
+                        position++;
+                    });
+
+                console.log(catalogs)
+                updateCatalogs(catalogs);
+            }
+        });
+    });
+}
+
 // DRAG AND DROP FEATURES
 function initCard() {
     const dropzones = document.querySelectorAll('.content');
@@ -311,7 +375,7 @@ function initCard() {
             draggable: '.card',
             ghostClass: "ghost",
 
-            // card movido
+            // cartão movido
             onEnd: function (event) {
 
                 const oldCatalogPosition = event.from.parentElement.id.substring(8);
@@ -362,19 +426,6 @@ function initCard() {
 
                 updateCards(cards);
             }
-        });
-    });
-}
-
-function initCatalog() {
-    const dropzones = document.querySelectorAll('.list-container');
-    dropzones.forEach(item => {
-        new Sortable(item, {
-            group: 'list',
-            sort: true,
-            filter: '.add-list',
-            draggable: '.list',
-            ghostClass: "ghost",
         });
     });
 }
