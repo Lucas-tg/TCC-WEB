@@ -473,7 +473,7 @@ function elKeypressHandler(e) {
         e.target.blur();
 
         // atualiza nome do cartão
-        if (e.target.classList.contains('card')) {
+        if (e.target.id ^= 'card_') {
             let cards = [{
                 'id': e.target.getAttribute('backendId'),
                 'name': e.target.innerHTML,
