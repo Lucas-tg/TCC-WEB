@@ -246,6 +246,25 @@ function insertCard(catalogId, cardName, cardDescription) {
 //         })
 //     });
 // }
+
+function updateProjects(projects) {
+    const socketPub = `/app/workspace/${workspaceId}/project.update`
+    stompClient.publish({
+        destination: socketPub,
+        body: JSON.stringify(projects)
+    });
+    console.log(`PUB: ${socketPub}`);
+}
+
+function updateCatalogs(catalogs) {
+    const socketPub = `/app/workspace/${workspaceId}/project/catalog.update`
+    stompClient.publish({
+        destination: socketPub,
+        body: JSON.stringify(catalogs)
+    });
+    console.log(`PUB: ${socketPub}`);
+}
+
 function updateCards(cards) {
     const socketPub = `/app/workspace/${workspaceId}/project/catalog/card.update`
     stompClient.publish({
@@ -353,6 +372,7 @@ function initCatalog() {
         new Sortable(item, {
             group: 'list',
             sort: true,
+            filter: '.add-list',
             draggable: '.list',
             ghostClass: "ghost",
         });
@@ -413,6 +433,18 @@ function elKeypressHandler(e) {
                 'catalogPosition': e.target.id.substring(5)
             }];
             updateCards(cards);
+        }
+
+        // atualiza nome do catálogo
+        if (e.target.classList.contains('title') && e.target.parentElement.getAttribute('backendId') != null) {
+            let catalogs = [{
+                'id': e.target.parentElement.getAttribute('backendId'),
+                'name': e.target.innerHTML,
+                'description': '',
+                'idProject': e.target.parentElement.parentElement.parentElement.getAttribute('backendId'),
+                'projectPosition': e.target.parentElement.id.substring(8)
+            }];
+            updateCatalogs(catalogs);
         }
     }
 
@@ -535,6 +567,7 @@ function elMouseLeaveHandler(e) {
 function deleteHandler(e) {
     const parent = e.target.parentElement;
 
+    // apaga cartão
     if (parent.classList.contains('card')) {
 
         const catalogPosition = parent.parentElement.parentElement.id.substring(8);
@@ -546,6 +579,7 @@ function deleteHandler(e) {
 
         parent.parentElement.removeChild(parent);
 
+        // atualiza lista de cartões que sobraram
         while (nextPosition <= cardsCount) {
             $(`#project_${projectPosition} #list_catalog #catalog_${catalogPosition} #list_card #card_${nextPosition}`).attr('id', `card_${nextPosition - 1}`);
             nextPosition++;
@@ -554,6 +588,7 @@ function deleteHandler(e) {
         deleteCard(parent.getAttribute('backendId'));
     }
 
+    // apaga catálogo
     if (parent.classList.contains('title')) {
 
         const projectPosition = parent.parentElement.parentElement.parentElement.id.substring(8);
@@ -564,6 +599,7 @@ function deleteHandler(e) {
 
         parent.parentElement.parentElement.removeChild(parent.parentElement);
 
+        // atualiza lista de catálogos que sobraram
         while (nextPosition <= catalogCount) {
             $(`#project_${projectPosition} #list_catalog #catalog_${nextPosition}`).attr('id', `catalog_${nextPosition - 1}`);
             nextPosition++;
@@ -576,14 +612,14 @@ function deleteHandler(e) {
 function workspaceUI() {
     const main = document.querySelector('#main');
 
-    const list = new Sortable(main, {
-        group: 'list',
-        sort: true,
-        filter: '.add-card',
-        draggable: '.list',
-        ghostClass: "ghost",
-        dragoverBubble: true,
-    });
+    // const list = new Sortable(main, {
+    //     group: 'list',
+    //     sort: true,
+    //     filter: '.add-card',
+    //     draggable: '.list',
+    //     ghostClass: "ghost",
+    //     dragoverBubble: true,
+    // });
 
     initCard();
     initCatalog();
