@@ -246,6 +246,25 @@ function insertCard(catalogId, cardName, cardDescription) {
 //         })
 //     });
 // }
+
+function updateProjects(projects) {
+    const socketPub = `/app/workspace/${workspaceId}/project.update`
+    stompClient.publish({
+        destination: socketPub,
+        body: JSON.stringify(projects)
+    });
+    console.log(`PUB: ${socketPub}`);
+}
+
+function updateCatalogs(catalogs) {
+    const socketPub = `/app/workspace/${workspaceId}/project/catalog.update`
+    stompClient.publish({
+        destination: socketPub,
+        body: JSON.stringify(catalogs)
+    });
+    console.log(`PUB: ${socketPub}`);
+}
+
 function updateCards(cards) {
     const socketPub = `/app/workspace/${workspaceId}/project/catalog/card.update`
     stompClient.publish({
@@ -282,6 +301,70 @@ function deleteCard(cardId) {
     alert('Cartão excluido com sucesso!');
 }
 
+function initCatalog() {
+    const dropzones = document.querySelectorAll('.list-container');
+    dropzones.forEach(item => {
+        new Sortable(item, {
+            group: 'list',
+            sort: true,
+            filter: '.add-list',
+            draggable: '.list',
+            ghostClass: "ghost",
+
+            // catálogo movido
+            onEnd: function (event) {
+
+                const oldProjectPosition = event.from.parentElement.id.substring(8);
+                const newProjectPosition = event.to.parentElement.id.substring(8);
+
+                let position;
+                let catalogs = [];
+
+                // movido entre projetos diferentes
+                if (oldProjectPosition !== newProjectPosition) {
+
+                    position = 1;
+                    // atualiza todas as posições de catalogos do antigo projeto (catalog_<position>)
+                    $(`#project_${oldProjectPosition} #list_catalog div[id^=catalog]`)
+                        .each(function () {
+                            $(this).attr('id', `catalog_${position}`);
+                            let catalog = {
+                                'id': $(this).attr('backendId'),
+                                'name': $(this).text(),
+                                'description': '',
+                                'idProject': $(`#project_${oldProjectPosition}`).attr('backendId'),
+                                'projectPosition': position
+                            }
+                            catalogs.push(catalog);
+                            position++;
+                        });
+
+                }
+
+                // atualiza todas as posições de catalogos do novo projeto (card_<position>)
+                position = 1;
+                console.log(event.item)
+                $(`#project_${newProjectPosition} #list_catalog div[class^=list]`)
+                    .each(function () {
+                        $(this).attr('id', `catalog_${position}`);
+                        let catalog = {
+                            'id': $(this).attr('backendId'),
+                            'name': $(this).children('#catalog_name').text(),
+                            'description': '',
+                            'idProject': $(`#project_${newProjectPosition}`).attr('backendId'),
+                            'projectPosition': position
+                        }
+                        catalogs.push(catalog);
+                        position++;
+                    });
+
+                console.log(catalogs)
+                updateCatalogs(catalogs);
+            }
+        });
+    });
+}
+
 // DRAG AND DROP FEATURES
 function initCard() {
     const dropzones = document.querySelectorAll('.content');
@@ -292,7 +375,7 @@ function initCard() {
             draggable: '.card',
             ghostClass: "ghost",
 
-            // card movido
+            // cartão movido
             onEnd: function (event) {
 
                 const oldCatalogPosition = event.from.parentElement.id.substring(8);
@@ -343,18 +426,6 @@ function initCard() {
 
                 updateCards(cards);
             }
-        });
-    });
-}
-
-function initCatalog() {
-    const dropzones = document.querySelectorAll('.list-container');
-    dropzones.forEach(item => {
-        new Sortable(item, {
-            group: 'list',
-            sort: true,
-            draggable: '.list',
-            ghostClass: "ghost",
         });
     });
 }
@@ -413,6 +484,18 @@ function elKeypressHandler(e) {
                 'catalogPosition': e.target.id.substring(5)
             }];
             updateCards(cards);
+        }
+
+        // atualiza nome do catálogo
+        if (e.target.id === 'catalog_name') {
+            let catalogs = [{
+                'id': e.target.parentElement.getAttribute('backendId'),
+                'name': e.target.innerHTML,
+                'description': '',
+                'idProject': e.target.parentElement.parentElement.parentElement.getAttribute('backendId'),
+                'projectPosition': e.target.parentElement.id.substring(8)
+            }];
+            updateCatalogs(catalogs);
         }
     }
 
@@ -535,6 +618,7 @@ function elMouseLeaveHandler(e) {
 function deleteHandler(e) {
     const parent = e.target.parentElement;
 
+    // apaga cartão
     if (parent.classList.contains('card')) {
 
         const catalogPosition = parent.parentElement.parentElement.id.substring(8);
@@ -546,6 +630,7 @@ function deleteHandler(e) {
 
         parent.parentElement.removeChild(parent);
 
+        // atualiza lista de cartões que sobraram
         while (nextPosition <= cardsCount) {
             $(`#project_${projectPosition} #list_catalog #catalog_${catalogPosition} #list_card #card_${nextPosition}`).attr('id', `card_${nextPosition - 1}`);
             nextPosition++;
@@ -554,6 +639,7 @@ function deleteHandler(e) {
         deleteCard(parent.getAttribute('backendId'));
     }
 
+    // apaga catálogo
     if (parent.classList.contains('title')) {
 
         const projectPosition = parent.parentElement.parentElement.parentElement.id.substring(8);
@@ -564,6 +650,7 @@ function deleteHandler(e) {
 
         parent.parentElement.parentElement.removeChild(parent.parentElement);
 
+        // atualiza lista de catálogos que sobraram
         while (nextPosition <= catalogCount) {
             $(`#project_${projectPosition} #list_catalog #catalog_${nextPosition}`).attr('id', `catalog_${nextPosition - 1}`);
             nextPosition++;
@@ -576,14 +663,14 @@ function deleteHandler(e) {
 function workspaceUI() {
     const main = document.querySelector('#main');
 
-    const list = new Sortable(main, {
-        group: 'list',
-        sort: true,
-        filter: '.add-card',
-        draggable: '.list',
-        ghostClass: "ghost",
-        dragoverBubble: true,
-    });
+    // const list = new Sortable(main, {
+    //     group: 'list',
+    //     sort: true,
+    //     filter: '.add-card',
+    //     draggable: '.list',
+    //     ghostClass: "ghost",
+    //     dragoverBubble: true,
+    // });
 
     initCard();
     initCatalog();
