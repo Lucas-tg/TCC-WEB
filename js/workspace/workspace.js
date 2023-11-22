@@ -436,7 +436,7 @@ function elKeypressHandler(e) {
         }
 
         // atualiza nome do catálogo
-        if (e.target.classList.contains('title') && e.target.parentElement.getAttribute('backendId') != null) {
+        if (e.target.id === 'catalog_name') {
             let catalogs = [{
                 'id': e.target.parentElement.getAttribute('backendId'),
                 'name': e.target.innerHTML,
