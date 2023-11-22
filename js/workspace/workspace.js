@@ -246,6 +246,14 @@ function insertCard(catalogId, cardName, cardDescription) {
 //         })
 //     });
 // }
+function updateCards(cards) {
+    const socketPub = `/app/workspace/${workspaceId}/project/catalog/card.update`
+    stompClient.publish({
+        destination: socketPub,
+        body: JSON.stringify(cards)
+    });
+    console.log(`PUB: ${socketPub}`);
+}
 
 function deleteProject(projectId) {
     const socketPub = `/app/workspace/${workspaceId}/project.delete/${projectId}`
@@ -283,16 +291,65 @@ function initCard() {
             sort: true,
             draggable: '.card',
             ghostClass: "ghost",
+
+            // card movido
+            onEnd: function (event) {
+
+                const oldCatalogPosition = event.from.parentElement.id.substring(8);
+                const newCatalogPosition = event.to.parentElement.id.substring(8);
+
+                const oldProjectPosition = event.from.parentElement.parentElement.parentElement.id.substring(8);
+                const newProjectPosition = event.to.parentElement.parentElement.parentElement.id.substring(8);
+
+                let position;
+                let cards = [];
+
+                // movido entre catálogos diferentes
+                if (oldProjectPosition !== newProjectPosition || oldCatalogPosition !== newCatalogPosition) {
+
+                    position = 1;
+                    // atualiza todas as posições de cartões do antigo catálogo (card_<position>)
+                    $(`#project_${oldProjectPosition} #list_catalog #catalog_${oldCatalogPosition} #list_card div[id^=card]`)
+                        .each(function () {
+                            $(this).attr('id', `card_${position}`);
+                            let card = {
+                                'id': $(this).attr('backendId'),
+                                'name': $(this).text(),
+                                'description': '',
+                                'idCatalog': $(`#project_${oldProjectPosition} #list_catalog #catalog_${oldCatalogPosition}`).attr('backendId'),
+                                'catalogPosition': position
+                            }
+                            cards.push(card);
+                            position++;
+                        });
+
+                }
+
+                // atualiza todas as posições de cartões do novo catálogo (card_<position>)
+                position = 1;
+                $(`#project_${newProjectPosition} #list_catalog #catalog_${newCatalogPosition} #list_card div[id^=card]`)
+                    .each(function () {
+                        $(this).attr('id', `card_${position}`);
+                        let card = {
+                            'id': $(this).attr('backendId'),
+                            'name': $(this).text(),
+                            'description': '',
+                            'idCatalog': $(`#project_${newProjectPosition} #list_catalog #catalog_${newCatalogPosition}`).attr('backendId'),
+                            'catalogPosition': position
+                        }
+                        cards.push(card);
+                        position++;
+                    });
+
+                updateCards(cards);
+            }
         });
     });
 }
 
-// for test only
 function initCatalog() {
-    console.log("initCatalog")
     const dropzones = document.querySelectorAll('.list-container');
     dropzones.forEach(item => {
-        console.log(item)
         new Sortable(item, {
             group: 'list',
             sort: true,
@@ -445,11 +502,14 @@ function elMouseEnterHandler(e) {
     const isRemovable = el.classList.contains('removable');
 
     if (isRemovable) {
+
+        // cria botão de apagar objeto quando o mouse é colocado em cima
         const del = document.createElement('span');
         del.className = 'del';
         del.innerHTML = '&times;';
         el.appendChild(del);
 
+        // fica aguardando o botão ser clicado
         el.addEventListener('click', deleteHandler);
     }
 }

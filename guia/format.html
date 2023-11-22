@@ -1,14 +1,14 @@
 <div id="main">
 	<div class="container" id="projects">
-		<div class="project_card" id="project_${position}">
+		<div class="project_card" id="project_${projectPosition}" backendId="${id}">
 			<div class="project_card_header" id="header">
 				<h1 id="project_name">${project.name}</h1>
 			</div>
 			<div class="list-container" id="list_catalog">
-				<div class="list" id="catalog_${position}">
+				<div class="list" id="catalog_${catalogPosition}" backendId="${id}">
 					<div class="title removable editable" id="catalog_name">${catalog.name}</div>
 					<div class="content" id="list_card">
-						<div class="card removable editable" id="card_${position}">${card.name}</div>
+						<div class="card removable editable" id="card_${cardPosition}" backendId="${id}">${card.name}</div>
 					</div>
 					<div class="add-card editable" id="insert_card">+ Adicionar novo card</div>
 				</div>
