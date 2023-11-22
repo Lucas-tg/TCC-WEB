@@ -68,7 +68,7 @@ function showProjects(workspace) {
 
             } else { // cria novo projeto no final
                 const divProject = `
-                            <div class="project_card removable editable" id="project_${position}" backendId="${project.id}">
+                            <div class="project_card" id="project_${position}" backendId="${project.id}">
                                 <div class="project_card_header" id="header">
                                     <h1 id="project_name">${project.name}</h1>
                                 </div>
@@ -655,27 +655,6 @@ function deleteHandler(e) {
         }
 
         deleteCatalog(parent.parentElement.getAttribute('backendId'));
-    }
-
-    // apaga projeto
-    if (parent.classList.contains('project_card')) {
-
-        const projectPosition = parent.id.substring(8);
-
-        const count = parent.parentElement.children.length;
-
-        let nextPosition = parseInt(parent.id.substring(8)) + 1;
-
-        parent.parentElement.removeChild(parent);
-
-        // atualiza lista de projetos que sobraram
-        while (nextPosition <= count) {
-            console.log( $(`#project_${nextPosition}`).html())
-            $(`#project_${nextPosition}`).attr('id', `project_${nextPosition - 1}`);
-            nextPosition++;
-        }
-
-        deleteProject(parent.getAttribute('backendId'));
     }
 }
 
