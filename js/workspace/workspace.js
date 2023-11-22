@@ -398,9 +398,22 @@ function bodyClickHandler(e) {
 }
 
 function elKeypressHandler(e) {
+
     if (e.keyCode === 13) { // 13 = Enter key
         e.preventDefault();
         e.target.blur();
+
+        // atualiza nome do cartão
+        if (e.target.classList.contains('card')) {
+            let cards = [{
+                'id': e.target.getAttribute('backendId'),
+                'name': e.target.innerHTML,
+                'description': '',
+                'idCatalog': e.target.parentElement.parentElement.getAttribute('backendId'),
+                'catalogPosition': e.target.id.substring(5)
+            }];
+            updateCards(cards);
+        }
     }
 
     const el = e.target;
