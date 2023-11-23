@@ -16,15 +16,6 @@ stompClient.onStompError = (frame) => {
 stompClient.onConnect = (frame) => {
     console.log(`Connected: ${frame}`);
 
-    const socketSub = `/topic/workspace/${workspaceId}/project.list`;
-
-    stompClient.subscribe(socketSub, (workspace) => {
-        console.log(`RESPONSE FROM: ${socketSub}`);
-        showProjects(JSON.parse(workspace.body));
-        workspaceUI();
-    });
-    console.log(`SUBSCRIBED: ${socketSub}`);
-
     var requestOptions = {
         method: 'GET', redirect: 'follow'
     };
@@ -32,22 +23,44 @@ stompClient.onConnect = (frame) => {
     fetch(`http://localhost:8082/workspaces/${workspaceId}`, requestOptions)
         .then(response => response.json())
         .then(json => {
-            showProjects(json);
+            showWorkspace(json);
             workspaceUI();
         })
         .catch(error => console.log('error', error));
+
+    const socketSub = `/topic/workspace/${workspaceId}/project.list`;
+
+    stompClient.subscribe(socketSub, (workspace) => {
+        console.log(`RESPONSE FROM: ${socketSub}`);
+        showWorkspace(JSON.parse(workspace.body));
+        workspaceUI();
+    });
+    console.log(`SUBSCRIBED: ${socketSub}`);
 };
 
-function showProjects(workspace) {
+function showWorkspace(workspace){
+    showProjects(workspace.projects);
 
-    const projectsCount = workspace.projects.length;
+}
+
+function showProjects(projects) {
+
+    // atualiza todas as posições de projeto (project_<position>)
+    let position = 1;
+    $(`#projects div[id^=project]`)
+        .each(function () {
+            $(this).attr('id', `project_${position}`);
+            position++;
+        });
+
+    const projectsCount = projects.length;
 
     // clear projects
     if (projectsCount === 0) {
         $(`#projects`).remove();
 
     } else {
-        workspace.projects.sort(function (a, b) {
+        projects.sort(function (a, b) {
             return a.workspacePosition - b.workspacePosition;
         });
 
@@ -55,20 +68,18 @@ function showProjects(workspace) {
         if ($(`#projects`).length <= 0) {
             $("#main").append(`<div class="container" id="projects"></div>`);
         }
-        workspace.projects.forEach(project => {
-
-            const position = project.workspacePosition;
+        projects.forEach(project => {
 
             // reescreve os dados do projeto para aquela posição
-            if ($(`#project_${position}`).length > 0) {
-                $(`#project_${position} #header #project_name`).text(project.name);
-                $(`#project_${position}`).attr("backendId", project.id);
+            if ($(`#project_${project.workspacePosition}`).length > 0) {
+                $(`#project_${project.workspacePosition} #header #project_name`).text(project.name);
+                $(`#project_${project.workspacePosition}`).attr("backendId", project.id);
 
-                showCatalogs(project, position);
+                showCatalogs(project.catalogs, project.workspacePosition);
 
             } else { // cria novo projeto no final
                 const divProject = `
-                            <div class="project_card" id="project_${position}" backendId="${project.id}">
+                            <div class="project_card" id="project_${project.workspacePosition}" backendId="${project.id}">
                                 <div class="project_card_header" id="header">
                                     <h1 id="project_name">${project.name}</h1>
                                 </div>
@@ -80,7 +91,7 @@ function showProjects(workspace) {
                             </div>`;
                 $(`#projects`).append(divProject);
 
-                showCatalogs(project, position);
+                showCatalogs(project.catalogs, project.workspacePosition);
             }
         });
 
@@ -94,81 +105,95 @@ function showProjects(workspace) {
     }
 }
 
-function showCatalogs(project, projectPosition) {
+function showCatalogs(catalogs, workspacePosition) {
 
-    var catalogsCount = project.catalogs.length;
+    // atualiza todas as posições de catálogo do projeto (catalog_<position>)
+    let position = 1;
+    $(`#project_${workspacePosition} #list_catalog div[id^=catalog]`)
+        .each(function () {
+            $(this).attr('id', `catalog_${position}`);
+            position++;
+        });
 
-    project.catalogs.sort(function (a, b) {
+    var catalogsCount = catalogs.length;
+
+    catalogs.sort(function (a, b) {
         return a.projectPosition - b.projectPosition;
     });
 
-    project.catalogs.forEach(catalog => {
+    catalogs.forEach(catalog => {
 
-        const position = catalog.projectPosition;
+        const projectPosition = catalog.projectPosition;
 
         // reescreve os dados do catálogo para aquela posição
-        if ($(`#project_${projectPosition} #list_catalog #catalog_${position}`).length > 0) {
-            $(`#project_${projectPosition} #list_catalog #catalog_${position} #catalog_name`).text(catalog.name);
-            $(`#project_${projectPosition} #list_catalog #catalog_${position}`).attr("backendId", catalog.id);
+        if ($(`#project_${workspacePosition} #list_catalog #catalog_${projectPosition}`).length > 0) {
+            $(`#project_${workspacePosition} #list_catalog #catalog_${projectPosition} #name`).text(catalog.name);
+            $(`#project_${workspacePosition} #list_catalog #catalog_${projectPosition}`).attr("backendId", catalog.id);
 
-            showCards(catalog, projectPosition, position);
+            showCards(catalog.cards, workspacePosition, projectPosition);
 
         } else { // cria novo catálogo no final
 
-            $(`#project_${projectPosition} #list_catalog #insert_catalog`).remove();
+            $(`#project_${workspacePosition} #list_catalog #insert_catalog`).remove();
             const divCatalog = `
-                    <div class="list" id="catalog_${position}" backendId="${catalog.id}">
-                        <div class="title removable editable" id="catalog_name">${catalog.name}</div>
+                    <div class="list" id="catalog_${projectPosition}" backendId="${catalog.id}">
+                        <div class="title removable editable" id="name_catalog">${catalog.name}</div>
                         <div class="content" id="list_card"></div>
                         <div class="add-card editable" id="insert_card">+ Adicionar novo card</div>
                     </div>
                     <div class="add-list" id="insert_catalog">
                         <div class="title editable">+ Adicionar novo catálogo</div>
                     </div>`;
-            $(`#project_${projectPosition} #list_catalog`).append(divCatalog);
+            $(`#project_${workspacePosition} #list_catalog`).append(divCatalog);
 
-            showCards(catalog, projectPosition, position);
+            showCards(catalog.cards, workspacePosition, projectPosition);
         }
     });
 
     // remove catalogos que sobraram
-    var idRemove = $(`#project_${projectPosition} #list_catalog`).children().length - 1;
-    while (idRemove > catalogsCount) {
-        $(`#project_${projectPosition} #list_catalog catalog_${idRemove}`).remove();
-        idRemove--;
+    for (let id = catalogsCount; id < $(`#project_${workspacePosition} #list_catalog div[id^=catalog]`).length; id++) {
+        $(`#project_${workspacePosition} #list_catalog div[id^=catalog]`)[id].remove();
     }
 }
 
-function showCards(catalog, projectPosition, catalogPosition) {
+function showCards(cards, workspacePosition, projectPosition) {
 
-    var cardsCount = catalog.cards.length;
+    // atualiza todas as posições de cartões do catálogo (card_<position>)
+    let position = 1;
+    console.log(`#catalog_${projectPosition}`)
+    $(`#project_${workspacePosition} #list_catalog #catalog_${projectPosition} #list_card div[id^=card]`)
+        .each(function () {
+            console.log(`card_${position}`)
+            $(this).attr('id', `card_${position}`);
+            position++;
+        });
 
-    catalog.cards.sort(function (a, b) {
+    var cardsCount = cards.length;
+
+    cards.sort(function (a, b) {
         return a.catalogPosition - b.catalogPosition;
     });
 
-    catalog.cards.forEach(card => {
+    cards.forEach(card => {
 
-        const position = card.catalogPosition;
+        const catalogPosition = card.catalogPosition;
 
         // reescreve os dados do cartão para aquela posição
-        if ($(`#project_${projectPosition} #list_catalog #catalog_${catalogPosition} #list_card #card_${position}`).length > 0) {
-            $(`#project_${projectPosition} #list_catalog #catalog_${catalogPosition} #list_card #card_${position}`).text(card.name);
-            $(`#project_${projectPosition} #list_catalog #catalog_${catalogPosition} #list_card #card_${position}`).attr("backendId", card.id);
+        if ($(`#project_${workspacePosition} #list_catalog #catalog_${projectPosition} #list_card #card_${catalogPosition}`).length > 0) {
+            $(`#project_${workspacePosition} #list_catalog #catalog_${projectPosition} #list_card #card_${catalogPosition}`).text(card.name);
+            $(`#project_${workspacePosition} #list_catalog #catalog_${projectPosition} #list_card #card_${catalogPosition}`).attr("backendId", card.id);
 
             // cria novo cartão no final
         } else {
-            const divCard = `<div class="card removable editable" id="card_${position}" backendId="${card.id}">${card.name}</div>`;
-            $(`#project_${projectPosition} #list_catalog #catalog_${catalogPosition} #list_card`).append(divCard);
+            const divCard = `<div class="card removable editable" id="card_${catalogPosition}" backendId="${card.id}">${card.name}</div>`;
+            $(`#project_${workspacePosition} #list_catalog #catalog_${projectPosition} #list_card`).append(divCard);
 
         }
     });
 
     // remove cartões que sobraram
-    var idRemove = $(`#project_${projectPosition} #list_catalog #catalog_${catalogPosition} #list_card`).children().length;
-    while (idRemove > cardsCount) {
-        $(`#project_${projectPosition} #list_catalog #catalog_${catalogPosition} #list_card #card_${idRemove}`).remove();
-        idRemove--;
+    for (let id = cardsCount; id < $(`#project_${workspacePosition} #list_catalog #catalog_${projectPosition} #list_card div[id^=card]`).length; id++) {
+        $(`#project_${workspacePosition} #list_catalog #catalog_${projectPosition} #list_card div[id^=card]`)[id].remove();
     }
 }
 
@@ -227,49 +252,29 @@ function insertCard(catalogId, cardName, cardDescription) {
     alert('Cartão criado com sucesso!');
 }
 
-// function updateProject(oldWorkspaceId, oldWorkspacePosition) {
-//     var id = document.getElementById(`projectId_${oldWorkspaceId}_${oldWorkspacePosition}`).value;
-//     var name = document.getElementById(`projectName_${oldWorkspaceId}_${oldWorkspacePosition}`).value;
-//     var description = document.getElementById(`projectDescription_${oldWorkspaceId}_${oldWorkspacePosition}`).value;
-//     var workspaceId = document.getElementById(`projectWorkspaceId_${oldWorkspaceId}_${oldWorkspacePosition}`).value;
-//     var workspacePosition = document.getElementById(`projectWorkspacePosition_${oldWorkspaceId}_${oldWorkspacePosition}`).value;
-//
-//     console.log(`Updating project ${id}`);
-//
-//     stompClient.publish({
-//         destination: `/app/workspace/${oldWorkspaceId}/${workspaceId}/project.update/${id}`,
-//         body: JSON.stringify({
-//             'name': name,
-//             'description': description,
-//             'idWorkspace': workspaceId,
-//             'workspacePosition': workspacePosition
-//         })
-//     });
-// }
-
-function updateProjects(projects) {
+function updateProject(project) {
     const socketPub = `/app/workspace/${workspaceId}/project.update`
     stompClient.publish({
         destination: socketPub,
-        body: JSON.stringify(projects)
+        body: JSON.stringify(project)
     });
     console.log(`PUB: ${socketPub}`);
 }
 
-function updateCatalogs(catalogs) {
+function updateCatalog(catalog) {
     const socketPub = `/app/workspace/${workspaceId}/project/catalog.update`
     stompClient.publish({
         destination: socketPub,
-        body: JSON.stringify(catalogs)
+        body: JSON.stringify(catalog)
     });
     console.log(`PUB: ${socketPub}`);
 }
 
-function updateCards(cards) {
+function updateCard(card) {
     const socketPub = `/app/workspace/${workspaceId}/project/catalog/card.update`
     stompClient.publish({
         destination: socketPub,
-        body: JSON.stringify(cards)
+        body: JSON.stringify(card)
     });
     console.log(`PUB: ${socketPub}`);
 }
@@ -314,56 +319,34 @@ function initCatalog() {
             // catálogo movido
             onEnd: function (event) {
 
-                const oldProjectPosition = event.from.parentElement.id.substring(8);
+                // recupera posição do novo projeto
                 const newProjectPosition = event.to.parentElement.id.substring(8);
 
-                let position;
-                let catalogs = [];
-
-                // movido entre projetos diferentes
-                if (oldProjectPosition !== newProjectPosition) {
-
-                    position = 1;
-                    // atualiza todas as posições de catalogos do antigo projeto (catalog_<position>)
-                    $(`#project_${oldProjectPosition} #list_catalog div[id^=catalog]`)
-                        .each(function () {
-                            $(this).attr('id', `catalog_${position}`);
-                            let catalog = {
-                                'id': $(this).attr('backendId'),
-                                'name': $(this).text(),
-                                'description': '',
-                                'idProject': $(`#project_${oldProjectPosition}`).attr('backendId'),
-                                'projectPosition': position
-                            }
-                            catalogs.push(catalog);
-                            position++;
-                        });
-
+                // recupera posição dentro do novo projeto
+                const listDiv = event.to.children;
+                let newPosition = 1;
+                let id = 0;
+                while (listDiv.length > newPosition && listDiv[id].getAttribute('backendId') !== event.item.getAttribute('backendId')) {
+                    if (listDiv[id].id !== 'insert_catalog') {
+                        newPosition++;
+                    }
+                    id++;
                 }
 
-                // atualiza todas as posições de catalogos do novo projeto (card_<position>)
-                position = 1;
-                $(`#project_${newProjectPosition} #list_catalog div[class^=list]`)
-                    .each(function () {
-                        $(this).attr('id', `catalog_${position}`);
-                        let catalog = {
-                            'id': $(this).attr('backendId'),
-                            'name': $(this).children('#catalog_name').text(),
-                            'description': '',
-                            'idProject': $(`#project_${newProjectPosition}`).attr('backendId'),
-                            'projectPosition': position
-                        }
-                        catalogs.push(catalog);
-                        position++;
-                    });
+                let catalog = {
+                    'id': event.item.getAttribute('backendId'),
+                    'name': event.item.querySelector('#name_catalog').innerHTML,
+                    'description': '',
+                    'idProject': $(`#project_${newProjectPosition}`).attr('backendId'),
+                    'projectPosition': newPosition
+                }
 
-                updateCatalogs(catalogs);
+                updateCatalog(catalog);
             }
         });
     });
 }
 
-// DRAG AND DROP FEATURES
 function initCard() {
     const dropzones = document.querySelectorAll('.content');
     dropzones.forEach(item => {
@@ -376,53 +359,29 @@ function initCard() {
             // cartão movido
             onEnd: function (event) {
 
-                const oldCatalogPosition = event.from.parentElement.id.substring(8);
-                const newCatalogPosition = event.to.parentElement.id.substring(8);
-
-                const oldProjectPosition = event.from.parentElement.parentElement.parentElement.id.substring(8);
+                // recupera posição do novo projeto
                 const newProjectPosition = event.to.parentElement.parentElement.parentElement.id.substring(8);
 
-                let position;
-                let cards = [];
+                // recupera posição do novo catálogo dentro do projeto
+                const newCatalogPosition = event.to.parentElement.id.substring(8);
 
-                // movido entre catálogos diferentes
-                if (oldProjectPosition !== newProjectPosition || oldCatalogPosition !== newCatalogPosition) {
-
-                    position = 1;
-                    // atualiza todas as posições de cartões do antigo catálogo (card_<position>)
-                    $(`#project_${oldProjectPosition} #list_catalog #catalog_${oldCatalogPosition} #list_card div[id^=card]`)
-                        .each(function () {
-                            $(this).attr('id', `card_${position}`);
-                            let card = {
-                                'id': $(this).attr('backendId'),
-                                'name': $(this).text(),
-                                'description': '',
-                                'idCatalog': $(`#project_${oldProjectPosition} #list_catalog #catalog_${oldCatalogPosition}`).attr('backendId'),
-                                'catalogPosition': position
-                            }
-                            cards.push(card);
-                            position++;
-                        });
-
+                // recupera posição dentro do novo catálogo
+                const listDiv = event.to.children;
+                let newPosition = 1;
+                while (listDiv[newPosition - 1].getAttribute('backendId') !== event.item.getAttribute('backendId')) {
+                    newPosition++;
                 }
 
-                // atualiza todas as posições de cartões do novo catálogo (card_<position>)
-                position = 1;
-                $(`#project_${newProjectPosition} #list_catalog #catalog_${newCatalogPosition} #list_card div[id^=card]`)
-                    .each(function () {
-                        $(this).attr('id', `card_${position}`);
-                        let card = {
-                            'id': $(this).attr('backendId'),
-                            'name': $(this).text(),
-                            'description': '',
-                            'idCatalog': $(`#project_${newProjectPosition} #list_catalog #catalog_${newCatalogPosition}`).attr('backendId'),
-                            'catalogPosition': position
-                        }
-                        cards.push(card);
-                        position++;
-                    });
+                event.item.setAttribute('id', `card_${newPosition}`);
+                let card = {
+                    'id': event.item.getAttribute('backendId'),
+                    'name': event.item.innerHTML,
+                    'description': '',
+                    'idCatalog': $(`#project_${newProjectPosition} #list_catalog #catalog_${newCatalogPosition}`).attr('backendId'),
+                    'catalogPosition': newPosition
+                }
 
-                updateCards(cards);
+                updateCard(card);
             }
         });
     });
@@ -473,28 +432,40 @@ function elKeypressHandler(e) {
         e.target.blur();
 
         // atualiza nome do cartão
-        if (e.target.id ^= 'card_') {
-            let cards = [{
+        if (e.target.classList.contains('card')) {
+            let card = {
                 'id': e.target.getAttribute('backendId'),
                 'name': e.target.innerHTML,
                 'description': '',
                 'idCatalog': e.target.parentElement.parentElement.getAttribute('backendId'),
                 'catalogPosition': e.target.id.substring(5)
-            }];
-            updateCards(cards);
+            };
+            updateCard(card);
         }
 
         // atualiza nome do catálogo
-        if (e.target.id === 'catalog_name') {
-            let catalogs = [{
+        if (e.target.id === 'name_catalog') {
+            let catalogs = {
                 'id': e.target.parentElement.getAttribute('backendId'),
                 'name': e.target.innerHTML,
                 'description': '',
                 'idProject': e.target.parentElement.parentElement.parentElement.getAttribute('backendId'),
                 'projectPosition': e.target.parentElement.id.substring(8)
-            }];
-            updateCatalogs(catalogs);
+            };
+            updateCatalog(catalog);
         }
+
+        // atualiza nome do projeto
+        // if (e.target.id === 'project_name') {
+        //     let catalogs = {
+        //         'id': e.target.parentElement.getAttribute('backendId'),
+        //         'name': e.target.innerHTML,
+        //         'description': '',
+        //         'idProject': e.target.parentElement.parentElement.parentElement.getAttribute('backendId'),
+        //         'projectPosition': e.target.parentElement.id.substring(8)
+        //     };
+        //     updateCatalog(catalog);
+        // }
     }
 
     const el = e.target;
@@ -512,6 +483,7 @@ function elBlurHandler(e) {
     el.contentEditable = false;
     el.classList.remove('editing');
 
+    // insere cartão
     if (el.classList.contains('pending')) {
         el.className = 'card removable editable';
 
@@ -539,6 +511,7 @@ function elBlurHandler(e) {
         el.parentElement.className = 'add-list';
     }
 
+    // insere catálogo
     if (el.parentElement.className === 'list pending') {
         el.parentElement.className = 'list';
 
@@ -564,8 +537,6 @@ function elBlurHandler(e) {
         newEl.id = 'insert_card';
         newEl.appendChild(document.createTextNode('+ Adicionar novo card'));
         el.parentNode.appendChild(newEl);
-
-        initCard();
 
         const addList = document.createElement('div');
         addList.className = 'add-list';
@@ -618,44 +589,14 @@ function deleteHandler(e) {
 
     // apaga cartão
     if (parent.classList.contains('card')) {
-
-        const catalogPosition = parent.parentElement.parentElement.id.substring(8);
-        const projectPosition = parent.parentElement.parentElement.parentElement.parentElement.id.substring(8);
-
-        const cardsCount = parent.parentElement.children.length;
-
-        let nextPosition = parseInt(parent.id.substring(5)) + 1;
-
-        parent.parentElement.removeChild(parent);
-
-        // atualiza lista de cartões que sobraram
-        while (nextPosition <= cardsCount) {
-            $(`#project_${projectPosition} #list_catalog #catalog_${catalogPosition} #list_card #card_${nextPosition}`).attr('id', `card_${nextPosition - 1}`);
-            nextPosition++;
-        }
-
         deleteCard(parent.getAttribute('backendId'));
     }
 
     // apaga catálogo
     if (parent.classList.contains('title')) {
-
-        const projectPosition = parent.parentElement.parentElement.parentElement.id.substring(8);
-
-        const catalogCount = parent.parentElement.parentElement.children.length - 1;
-
-        let nextPosition = parseInt(parent.parentElement.id.substring(8)) + 1;
-
-        parent.parentElement.parentElement.removeChild(parent.parentElement);
-
-        // atualiza lista de catálogos que sobraram
-        while (nextPosition <= catalogCount) {
-            $(`#project_${projectPosition} #list_catalog #catalog_${nextPosition}`).attr('id', `catalog_${nextPosition - 1}`);
-            nextPosition++;
-        }
-
         deleteCatalog(parent.parentElement.getAttribute('backendId'));
     }
+
 }
 
 function workspaceUI() {
