@@ -14,13 +14,6 @@ stompClient.onStompError = (frame) => {
 stompClient.onConnect = (frame) => {
     console.log(`Connected: ${frame}`);
 
-    const socketSub = `/topic/user/${userId}/workspace.list`;
-    stompClient.subscribe(socketSub, (user) => {
-        console.log(`RESPONSE FROM: ${socketSub}`);
-        showWorkspaces(JSON.parse(user.body));
-    });
-    console.log(`SUBSCRIBED: ${socketSub}`);
-
     var requestOptions = {
         method: 'GET',
         redirect: 'follow'
@@ -32,6 +25,13 @@ stompClient.onConnect = (frame) => {
             showWorkspaces(json);
         })
         .catch(error => console.log('error', error));
+
+    const socketSub = `/topic/user/${userId}/workspace.list`;
+    stompClient.subscribe(socketSub, (user) => {
+        console.log(`RESPONSE FROM: ${socketSub}`);
+        showWorkspaces(JSON.parse(user.body));
+    });
+    console.log(`SUBSCRIBED: ${socketSub}`);
 };
 
 function alertWorkspaceCreated() {
@@ -48,13 +48,15 @@ function alertWorkspaceCreated() {
 }
 
 function insertWorkspace() {
-    const socketPub = `/app/user/${userId}/workspace.add`;
+    const dest = `/app/user/${userId}/workspace.add`;
+    const body = {
+        'name': $("#workspaceNameNewProject").val(), 'description': $("#workspaceDescriptionNewProject").val()
+    };
     stompClient.publish({
-        destination: socketPub, body: JSON.stringify({
-            'name': $("#workspaceNameNewProject").val(), 'description': $("#workspaceDescriptionNewProject").val()
-        })
+        destination: dest, body: JSON.stringify(body)
     });
-    console.log(`PUB: ${socketPub}`);
+    console.log(`PUB: ${dest}`);
+    console.log(body);
     alertWorkspaceCreated();
 }
 
@@ -70,18 +72,21 @@ function addUserWorkspace(rowId, userName) {
 }
 
 function updateWorkspace(id, name, description) {
-    const socketPub = `/app/user/${userId}/workspace.update/${id}`;
+    const dest = `/app/user/${userId}/workspace.update/${id}`;
+    const body = {'name': name, 'description': description}
     stompClient.publish({
-        destination: socketPub,
-        body: JSON.stringify({'name': name, 'description': description})
+        destination: dest,
+        body: JSON.stringify(body)
     });
-    console.log(`PUB: ${socketPub}`);
+    console.log(`PUB: ${dest}`);
 }
 
 function deleteWorkspace(id) {
+    const dest = `/app/user/${userId}/workspace.delete/${id}`;
     stompClient.publish({
-        destination: `/app/user/${userId}/workspace.delete/${id}`
+        destination: dest
     });
+    console.log(`PUB: ${dest}`);
 }
 
 function showWorkspaces(user) {

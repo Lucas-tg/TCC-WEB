@@ -38,9 +38,105 @@ stompClient.onConnect = (frame) => {
     console.log(`SUBSCRIBED: ${socketSub}`);
 };
 
-function showWorkspace(workspace){
-    showProjects(workspace.projects);
+function alert(message) {
+    $(`#alert`).text(message);
+    // Mostrar a mensagem de sucesso
+    document.getElementById('alert').style.display = 'block';
 
+    // Fechar o modal
+    $('#createProjectModal').modal('hide');
+
+    // Ocultar a mensagem de sucesso após 3 segundos (3000 milissegundos)
+    setTimeout(function () {
+        document.getElementById('alert').style.display = 'none';
+    }, 3000); // 3 segundos (3000 ms)
+}
+
+function socketPub(dest, body) {
+    if (body == null) {
+        stompClient.publish({
+            destination: dest
+        });
+        console.log(`PUB: ${dest}`);
+    } else {
+        stompClient.publish({
+            destination: dest, body: JSON.stringify(body)
+        });
+        console.log(`PUB: ${dest}`);
+        console.log(body);
+    }
+}
+
+function insertProject() {
+    const dest = `/app/workspace/${workspaceId}/project.add`;
+    const body = {
+        'name': $("#newProjectName").val(),
+        'description': $("#newProjectDescription").val(),
+        'idWorkspace': workspaceId,
+        'workspacePosition': -1
+    };
+    socketPub(dest, body);
+    alert('Projeto criado com sucesso!');
+}
+
+function insertCatalog(projectId, catalogName) {
+    const dest = `/app/workspace/${workspaceId}/project/catalog.add`;
+    const body = {
+        'name': catalogName,
+        'idProject': projectId,
+        'projectPosition': -1
+    };
+    socketPub(dest, body);
+    alert('Catálogo criado com sucesso!');
+}
+
+function insertCard(catalogId, cardName, cardDescription) {
+    const dest = `/app/workspace/${workspaceId}/project/catalog/card.add`;
+    const body = {
+        'name': cardName,
+        'description': cardDescription,
+        'idCatalog': catalogId,
+        'catalogPosition': -1
+    };
+    socketPub(dest, body);
+    alert('Cartão criado com sucesso!');
+}
+
+function updateProject(project) {
+    const dest = `/app/workspace/${workspaceId}/project.update`
+    socketPub(dest, project);
+}
+
+function updateCatalog(catalog) {
+    const dest = `/app/workspace/${workspaceId}/project/catalog.update`;
+    socketPub(dest, catalog);
+}
+
+function updateCard(card) {
+    const dest = `/app/workspace/${workspaceId}/project/catalog/card.update`
+    socketPub(dest, card);
+}
+
+function deleteProject(projectId) {
+    const dest = `/app/workspace/${workspaceId}/project.delete/${projectId}`
+    socketPub(dest, null);
+    alert('Projeto excluido com sucesso!');
+}
+
+function deleteCatalog(catalogId) {
+    const dest = `/app/workspace/${workspaceId}/project/catalog.delete/${catalogId}`
+    socketPub(dest, null);
+    alert('Catálogo excluido com sucesso!');
+}
+
+function deleteCard(cardId) {
+    const dest = `/app/workspace/${workspaceId}/project/catalog/card.delete/${cardId}`
+    socketPub(dest, null);
+    alert('Cartão excluido com sucesso!');
+}
+
+function showWorkspace(workspace) {
+    showProjects(workspace.projects);
 }
 
 function showProjects(projects) {
@@ -127,7 +223,7 @@ function showCatalogs(catalogs, workspacePosition) {
 
         // reescreve os dados do catálogo para aquela posição
         if ($(`#project_${workspacePosition} #list_catalog #catalog_${projectPosition}`).length > 0) {
-            $(`#project_${workspacePosition} #list_catalog #catalog_${projectPosition} #name`).text(catalog.name);
+            $(`#project_${workspacePosition} #list_catalog #catalog_${projectPosition} #name_catalog`).text(catalog.name);
             $(`#project_${workspacePosition} #list_catalog #catalog_${projectPosition}`).attr("backendId", catalog.id);
 
             showCards(catalog.cards, workspacePosition, projectPosition);
@@ -160,10 +256,8 @@ function showCards(cards, workspacePosition, projectPosition) {
 
     // atualiza todas as posições de cartões do catálogo (card_<position>)
     let position = 1;
-    console.log(`#catalog_${projectPosition}`)
     $(`#project_${workspacePosition} #list_catalog #catalog_${projectPosition} #list_card div[id^=card]`)
         .each(function () {
-            console.log(`card_${position}`)
             $(this).attr('id', `card_${position}`);
             position++;
         });
@@ -197,115 +291,6 @@ function showCards(cards, workspacePosition, projectPosition) {
     }
 }
 
-function alert(message) {
-    $(`#alert`).text(message);
-    // Mostrar a mensagem de sucesso
-    document.getElementById('alert').style.display = 'block';
-
-    // Fechar o modal
-    $('#createProjectModal').modal('hide');
-
-    // Ocultar a mensagem de sucesso após 3 segundos (3000 milissegundos)
-    setTimeout(function () {
-        document.getElementById('alert').style.display = 'none';
-    }, 3000); // 3 segundos (3000 ms)
-}
-
-function insertProject() {
-    const socketPub = `/app/workspace/${workspaceId}/project.add`;
-    stompClient.publish({
-        destination: socketPub, body: JSON.stringify({
-            'name': $("#newProjectName").val(),
-            'description': $("#newProjectDescription").val(),
-            'idWorkspace': workspaceId,
-            'workspacePosition': -1
-        })
-    });
-    console.log(`PUB: ${socketPub}`);
-    alert('Projeto criado com sucesso!');
-}
-
-function insertCatalog(projectId, catalogName) {
-    const socketPub = `/app/workspace/${workspaceId}/project/catalog.add`;
-    stompClient.publish({
-        destination: socketPub, body: JSON.stringify({
-            'name': catalogName,
-            'idProject': projectId,
-            'projectPosition': -1
-        })
-    });
-    console.log(`PUB: ${socketPub}`);
-    alert('Catálogo criado com sucesso!');
-}
-
-function insertCard(catalogId, cardName, cardDescription) {
-    const socketPub = `/app/workspace/${workspaceId}/project/catalog/card.add`;
-    stompClient.publish({
-        destination: socketPub, body: JSON.stringify({
-            'name': cardName,
-            'description': cardDescription,
-            'idCatalog': catalogId,
-            'catalogPosition': -1
-        })
-    });
-    console.log(`PUB: ${socketPub}`);
-    alert('Cartão criado com sucesso!');
-}
-
-function updateProject(project) {
-    const socketPub = `/app/workspace/${workspaceId}/project.update`
-    stompClient.publish({
-        destination: socketPub,
-        body: JSON.stringify(project)
-    });
-    console.log(`PUB: ${socketPub}`);
-}
-
-function updateCatalog(catalog) {
-    const socketPub = `/app/workspace/${workspaceId}/project/catalog.update`
-    stompClient.publish({
-        destination: socketPub,
-        body: JSON.stringify(catalog)
-    });
-    console.log(`PUB: ${socketPub}`);
-}
-
-function updateCard(card) {
-    const socketPub = `/app/workspace/${workspaceId}/project/catalog/card.update`
-    stompClient.publish({
-        destination: socketPub,
-        body: JSON.stringify(card)
-    });
-    console.log(`PUB: ${socketPub}`);
-}
-
-function deleteProject(projectId) {
-    const socketPub = `/app/workspace/${workspaceId}/project.delete/${projectId}`
-    stompClient.publish({
-        destination: socketPub
-    });
-    console.log(`PUB: ${socketPub}`);
-    alert('Projeto excluido com sucesso!');
-}
-
-function deleteCatalog(catalogId) {
-    const socketPub = `/app/workspace/${workspaceId}/project/catalog.delete/${catalogId}`
-    stompClient.publish({
-        destination: socketPub
-    });
-    console.log(`PUB: ${socketPub}`);
-    alert('Catálogo excluido com sucesso!');
-}
-
-function deleteCard(cardId) {
-    const socketPub = `/app/workspace/${workspaceId}/project/catalog/card.delete/${cardId}`
-    stompClient.publish({
-        destination: socketPub
-    });
-    console.log(`PUB: ${socketPub}`);
-    alert('Cartão excluido com sucesso!');
-}
-
 function initCatalog() {
     const dropzones = document.querySelectorAll('.list-container');
     dropzones.forEach(item => {
@@ -332,6 +317,8 @@ function initCatalog() {
                     }
                     id++;
                 }
+
+                console.log(event.item);
 
                 let catalog = {
                     'id': event.item.getAttribute('backendId'),
@@ -431,10 +418,11 @@ function elKeypressHandler(e) {
         e.preventDefault();
         e.target.blur();
 
+        let backendId = e.target.getAttribute('backendId');
         // atualiza nome do cartão
-        if (e.target.classList.contains('card')) {
+        if (e.target.classList.contains('card') && backendId != null) {
             let card = {
-                'id': e.target.getAttribute('backendId'),
+                'id': backendId,
                 'name': e.target.innerHTML,
                 'description': '',
                 'idCatalog': e.target.parentElement.parentElement.getAttribute('backendId'),
@@ -444,9 +432,10 @@ function elKeypressHandler(e) {
         }
 
         // atualiza nome do catálogo
-        if (e.target.id === 'name_catalog') {
-            let catalogs = {
-                'id': e.target.parentElement.getAttribute('backendId'),
+        backendId = e.target.parentElement.getAttribute('backendId');
+        if (e.target.id === 'name_catalog' && backendId != null) {
+            let catalog = {
+                'id': backendId,
                 'name': e.target.innerHTML,
                 'description': '',
                 'idProject': e.target.parentElement.parentElement.parentElement.getAttribute('backendId'),
@@ -525,6 +514,7 @@ function elBlurHandler(e) {
         const catalogName = el.innerText;
 
         el.className = 'title removable editable';
+        el.id = 'name_catalog';
 
         const newContent = document.createElement('div');
         newContent.className = 'content';
