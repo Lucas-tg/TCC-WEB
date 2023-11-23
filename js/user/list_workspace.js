@@ -14,13 +14,6 @@ stompClient.onStompError = (frame) => {
 stompClient.onConnect = (frame) => {
     console.log(`Connected: ${frame}`);
 
-    const socketSub = `/topic/user/${userId}/workspace.list`;
-    stompClient.subscribe(socketSub, (user) => {
-        console.log(`RESPONSE FROM: ${socketSub}`);
-        showWorkspaces(JSON.parse(user.body));
-    });
-    console.log(`SUBSCRIBED: ${socketSub}`);
-
     var requestOptions = {
         method: 'GET',
         redirect: 'follow'
@@ -32,6 +25,13 @@ stompClient.onConnect = (frame) => {
             showWorkspaces(json);
         })
         .catch(error => console.log('error', error));
+
+    const socketSub = `/topic/user/${userId}/workspace.list`;
+    stompClient.subscribe(socketSub, (user) => {
+        console.log(`RESPONSE FROM: ${socketSub}`);
+        showWorkspaces(JSON.parse(user.body));
+    });
+    console.log(`SUBSCRIBED: ${socketSub}`);
 };
 
 function alertWorkspaceCreated() {
@@ -47,41 +47,55 @@ function alertWorkspaceCreated() {
     }, 3000); // 3 segundos (3000 ms)
 }
 
+function socketPub(dest, body) {
+    if (body == null) {
+        stompClient.publish({
+            destination: dest
+        });
+        console.log(`PUB: ${dest}`);
+    } else {
+        stompClient.publish({
+            destination: dest, body: JSON.stringify(body)
+        });
+        console.log(`PUB: ${dest}`);
+        console.log(body);
+    }
+}
+
 function insertWorkspace() {
-    const socketPub = `/app/user/${userId}/workspace.add`;
-    stompClient.publish({
-        destination: socketPub, body: JSON.stringify({
-            'name': $("#workspaceNameNewProject").val(), 'description': $("#workspaceDescriptionNewProject").val()
-        })
-    });
-    console.log(`PUB: ${socketPub}`);
+    const dest = `/app/user/${userId}/workspace.add`;
+    const body = {
+        'name': $("#workspaceNameNewProject").val(), 'description': $("#workspaceDescriptionNewProject").val()
+    };
+    socketPub(dest, body);
     alertWorkspaceCreated();
 }
 
-// rowId = id do workspace;
-// userName = input do usuario no modal (email do usuario)
-function addUserWorkspace(rowId, userName) {
-    console.log(`${rowId} ${userName}`);
-    /*
-    stompClient.publish({
-       // destination: ...
-    });
-    */
+function addUserWorkspace(workspaceId, email) {
+    var requestOptions = {
+        method: 'GET',
+        redirect: 'follow'
+    };
+
+    fetch(`http://localhost:8082/users/${email}`, requestOptions)
+        .then(response => response.json())
+        .then(json => {
+            console.log("AQUI")
+            const dest = `/app/user.add/${json.id}/workspace/${workspaceId}`;
+            socketPub(dest, null);
+        })
+        .catch(error => console.log('error', error));
 }
 
 function updateWorkspace(id, name, description) {
-    const socketPub = `/app/user/${userId}/workspace.update/${id}`;
-    stompClient.publish({
-        destination: socketPub,
-        body: JSON.stringify({'name': name, 'description': description})
-    });
-    console.log(`PUB: ${socketPub}`);
+    const dest = `/app/user/${userId}/workspace.update/${id}`;
+    const body = {'name': name, 'description': description}
+    socketPub(dest, body);
 }
 
 function deleteWorkspace(id) {
-    stompClient.publish({
-        destination: `/app/user/${userId}/workspace.delete/${id}`
-    });
+    const dest = `/app/user/${userId}/workspace.delete/${id}`;
+    socketPub(dest, null);
 }
 
 function showWorkspaces(user) {
