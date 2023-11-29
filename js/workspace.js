@@ -4,19 +4,19 @@ const stompClient = new StompJs.Client({
 
 stompClient.onWebSocketError = (error) => {
     console.error('Error with websocket', error);
-    alert("Problema de conexão");
+    userAlert("Problema de conexão");
 };
 
 stompClient.onStompError = (frame) => {
     console.error(`Broker reported error: ${frame.headers['message']}`);
     console.error(`Additional details: ${frame.body}`);
-    alert("Problema de conexão");
+    userAlert("Problema de conexão");
 };
 
 stompClient.onConnect = (frame) => {
     console.log(`Connected: ${frame}`);
 
-    var requestOptions = {
+    const requestOptions = {
         method: 'GET', redirect: 'follow'
     };
 
@@ -33,26 +33,38 @@ stompClient.onConnect = (frame) => {
     stompClient.subscribe(socketSub, (workspace) => {
         console.log(`RESPONSE FROM: ${socketSub}`);
         showWorkspace(JSON.parse(workspace.body));
+        if (lastAction != null) {
+            userAlert(lastAction);
+            lastAction = null;
+        }
+        // habilita interação do usuário
+        const main = document.querySelector('#main');
+        main.classList.remove('disabled');
+        const createProject = document.querySelector('#openCreateProject');
+        createProject.classList.remove('disabled');
         workspaceUI();
     });
     console.log(`SUBSCRIBED: ${socketSub}`);
 };
 
-function alert(message) {
-    $(`#alert`).text(message);
+function userAlert(message) {
+    $(`#userAlert`).text(message);
     // Mostrar a mensagem de sucesso
-    document.getElementById('alert').style.display = 'block';
-
-    // Fechar o modal
-    $('#createProjectModal').modal('hide');
+    document.getElementById('userAlert').style.display = 'block';
 
     // Ocultar a mensagem de sucesso após 3 segundos (3000 milissegundos)
     setTimeout(function () {
-        document.getElementById('alert').style.display = 'none';
+        document.getElementById('userAlert').style.display = 'none';
     }, 3000); // 3 segundos (3000 ms)
 }
 
 function socketPub(dest, body) {
+    // desabilita interação do usuário
+    const main = document.querySelector('#main');
+    main.classList.add('disabled');
+    const createProject = document.querySelector('#openCreateProject');
+    createProject.classList.add('disabled');
+
     if (body == null) {
         stompClient.publish({
             destination: dest
@@ -68,6 +80,8 @@ function socketPub(dest, body) {
 }
 
 function insertProject() {
+    // Fechar o modal
+    $('#createProjectModal').modal('hide');
     const dest = `/app/workspace/${workspaceId}/project.add`;
     const body = {
         'name': $("#newProjectName").val(),
@@ -76,7 +90,7 @@ function insertProject() {
         'workspacePosition': -1
     };
     socketPub(dest, body);
-    alert('Projeto criado com sucesso!');
+    lastAction = 'Projeto criado com sucesso!';
 }
 
 function insertCatalog(projectId, catalogName) {
@@ -87,7 +101,7 @@ function insertCatalog(projectId, catalogName) {
         'projectPosition': -1
     };
     socketPub(dest, body);
-    alert('Catálogo criado com sucesso!');
+    lastAction = 'Catálogo criado com sucesso!';
 }
 
 function insertCard(catalogId, cardName, cardDescription) {
@@ -99,40 +113,40 @@ function insertCard(catalogId, cardName, cardDescription) {
         'catalogPosition': -1
     };
     socketPub(dest, body);
-    alert('Cartão criado com sucesso!');
+    lastAction = 'Cartão criado com sucesso!';
 }
 
-function updateProject(project) {
-    const dest = `/app/workspace/${workspaceId}/project.update`
+function updateProject(id, project) {
+    const dest = `/app/workspace/${workspaceId}/project.update/${id}`
     socketPub(dest, project);
 }
 
-function updateCatalog(catalog) {
-    const dest = `/app/workspace/${workspaceId}/project/catalog.update`;
+function updateCatalog(id, catalog) {
+    const dest = `/app/workspace/${workspaceId}/project/catalog.update/${id}`;
     socketPub(dest, catalog);
 }
 
-function updateCard(card) {
-    const dest = `/app/workspace/${workspaceId}/project/catalog/card.update`
+function updateCard(id, card) {
+    const dest = `/app/workspace/${workspaceId}/project/catalog/card.update/${id}`
     socketPub(dest, card);
 }
 
 function deleteProject(projectId) {
     const dest = `/app/workspace/${workspaceId}/project.delete/${projectId}`
     socketPub(dest, null);
-    alert('Projeto excluido com sucesso!');
+    lastAction = 'Projeto excluido com sucesso!';
 }
 
 function deleteCatalog(catalogId) {
     const dest = `/app/workspace/${workspaceId}/project/catalog.delete/${catalogId}`
     socketPub(dest, null);
-    alert('Catálogo excluido com sucesso!');
+    lastAction = 'Catálogo excluido com sucesso!';
 }
 
 function deleteCard(cardId) {
     const dest = `/app/workspace/${workspaceId}/project/catalog/card.delete/${cardId}`
     socketPub(dest, null);
-    alert('Cartão excluido com sucesso!');
+    lastAction = 'Cartão excluido com sucesso!';
 }
 
 function showWorkspace(workspace) {
@@ -177,7 +191,7 @@ function showProjects(projects) {
                 const divProject = `
                             <div class="project_card" id="project_${project.workspacePosition}" backendId="${project.id}">
                                 <div class="project_card_header" id="header">
-                                    <h1 id="project_name">${project.name}</h1>
+                                    <h1 class="project removable editable" id="project_name">${project.name}</h1>
                                 </div>
                                 <div class="list-container" id="list_catalog">
                                     <div class="add-list" id="insert_catalog">
@@ -192,9 +206,8 @@ function showProjects(projects) {
         });
 
         // remove projetos que sobraram
-        var idRemove = $(`#projects`).children().length;
+        let idRemove = $(`#projects`).children().length;
         while (idRemove > projectsCount) {
-            console.log("REMOVE: " + $(`#project_${idRemove}`).text());
             $(`#project_${idRemove}`).remove();
             idRemove--;
         }
@@ -211,7 +224,7 @@ function showCatalogs(catalogs, workspacePosition) {
             position++;
         });
 
-    var catalogsCount = catalogs.length;
+    const catalogsCount = catalogs.length;
 
     catalogs.sort(function (a, b) {
         return a.projectPosition - b.projectPosition;
@@ -262,7 +275,7 @@ function showCards(cards, workspacePosition, projectPosition) {
             position++;
         });
 
-    var cardsCount = cards.length;
+    const cardsCount = cards.length;
 
     cards.sort(function (a, b) {
         return a.catalogPosition - b.catalogPosition;
@@ -289,6 +302,46 @@ function showCards(cards, workspacePosition, projectPosition) {
     for (let id = cardsCount; id < $(`#project_${workspacePosition} #list_catalog #catalog_${projectPosition} #list_card div[id^=card]`).length; id++) {
         $(`#project_${workspacePosition} #list_catalog #catalog_${projectPosition} #list_card div[id^=card]`)[id].remove();
     }
+}
+
+function initProject() {
+    const dropzones = document.querySelectorAll('.container');
+    dropzones.forEach(item => {
+        new Sortable(item, {
+            group: 'project_card',
+            sort: true,
+            draggable: '.project_card',
+            ghostClass: "ghost",
+
+            // projeto movido
+            onEnd: function (event) {
+
+                // recupera posição dentro do novo workspace
+                const listDiv = event.to.children;
+                let newPosition = 1;
+                while (listDiv.length > newPosition && listDiv[newPosition-1].getAttribute('backendId') !== event.item.getAttribute('backendId')) {
+                    newPosition++;
+                }
+
+                // recupera o nome sem o <span>
+                let projectName = event.item.querySelector('#project_name').innerHTML;
+                if (projectName.indexOf('<span') !== -1) {
+                    projectName = projectName.substring(0, projectName.indexOf('<span'));
+                }
+
+                let project = {
+                    'name': projectName,
+                    'description': '',
+                    'idWorkspace': workspaceId,
+                    'workspacePosition': newPosition
+                }
+
+                const projectId =  event.item.getAttribute('backendId');
+
+                updateProject(projectId, project);
+            }
+        });
+    });
 }
 
 function initCatalog() {
@@ -318,17 +371,21 @@ function initCatalog() {
                     id++;
                 }
 
-                console.log(event.item);
+                // recupera o nome sem o <span>
+                let catalogName = event.item.querySelector('#name_catalog').innerHTML;
+                if (catalogName.indexOf('<span') !== -1) {
+                    catalogName = catalogName.substring(0, catalogName.indexOf('<span'));
+                }
 
                 let catalog = {
-                    'id': event.item.getAttribute('backendId'),
-                    'name': event.item.querySelector('#name_catalog').innerHTML,
+                    'name': catalogName,
                     'description': '',
                     'idProject': $(`#project_${newProjectPosition}`).attr('backendId'),
                     'projectPosition': newPosition
                 }
 
-                updateCatalog(catalog);
+                const catalogId = event.item.getAttribute('backendId');
+                updateCatalog(catalogId, catalog);
             }
         });
     });
@@ -360,15 +417,22 @@ function initCard() {
                 }
 
                 event.item.setAttribute('id', `card_${newPosition}`);
+
+                // recupera o nome sem o <span>
+                let cardName = event.item.innerHTML;
+                if (cardName.indexOf('<span') !== -1) {
+                    cardName = cardName.substring(0, cardName.indexOf('<span'));
+                }
+
                 let card = {
-                    'id': event.item.getAttribute('backendId'),
-                    'name': event.item.innerHTML,
+                    'name': cardName,
                     'description': '',
                     'idCatalog': $(`#project_${newProjectPosition} #list_catalog #catalog_${newCatalogPosition}`).attr('backendId'),
                     'catalogPosition': newPosition
                 }
 
-                updateCard(card);
+                const cardId = event.item.getAttribute('backendId')
+                updateCard(cardId, card);
             }
         });
     });
@@ -419,42 +483,65 @@ function elKeypressHandler(e) {
         e.target.blur();
 
         let backendId = e.target.getAttribute('backendId');
+
         // atualiza nome do cartão
         if (e.target.classList.contains('card') && backendId != null) {
+
+
+            // recupera o nome sem o <span>
+            let cardName = e.target.innerHTML;
+            if (cardName.indexOf('<span') !== -1) {
+                cardName = cardName.substring(0, cardName.indexOf('<span'));
+            }
+
             let card = {
-                'id': backendId,
-                'name': e.target.innerHTML,
+                'name': cardName,
                 'description': '',
                 'idCatalog': e.target.parentElement.parentElement.getAttribute('backendId'),
                 'catalogPosition': e.target.id.substring(5)
             };
-            updateCard(card);
+            updateCard(backendId, card);
         }
 
         // atualiza nome do catálogo
         backendId = e.target.parentElement.getAttribute('backendId');
         if (e.target.id === 'name_catalog' && backendId != null) {
+
+            // recupera o nome sem o <span>
+            let catalogName = e.target.innerHTML;
+            if (catalogName.indexOf('<span') !== -1) {
+                catalogName = catalogName.substring(0, catalogName.indexOf('<span'));
+            }
+
             let catalog = {
-                'id': backendId,
-                'name': e.target.innerHTML,
+                'name': catalogName,
                 'description': '',
                 'idProject': e.target.parentElement.parentElement.parentElement.getAttribute('backendId'),
                 'projectPosition': e.target.parentElement.id.substring(8)
             };
-            updateCatalog(catalog);
+
+            updateCatalog(backendId, catalog);
         }
 
         // atualiza nome do projeto
-        // if (e.target.id === 'project_name') {
-        //     let catalogs = {
-        //         'id': e.target.parentElement.getAttribute('backendId'),
-        //         'name': e.target.innerHTML,
-        //         'description': '',
-        //         'idProject': e.target.parentElement.parentElement.parentElement.getAttribute('backendId'),
-        //         'projectPosition': e.target.parentElement.id.substring(8)
-        //     };
-        //     updateCatalog(catalog);
-        // }
+        backendId = e.target.parentElement.parentElement.getAttribute('backendId');
+        if (e.target.id === 'project_name' && backendId != null) {
+
+            // recupera o nome sem o <span>
+            let projectName = e.target.innerHTML;
+            if (projectName.indexOf('<span') !== -1) {
+                projectName = projectName.substring(0, projectName.indexOf('<span'));
+            }
+
+            let project = {
+                'name': projectName,
+                'description': '',
+                'idWorkspace': workspaceId,
+                'workspacePosition': e.target.parentElement.parentElement.id.substring(8)
+            };
+
+            updateProject(backendId, project);
+        }
     }
 
     const el = e.target;
@@ -482,8 +569,11 @@ function elBlurHandler(e) {
         // recupera catalogId que o card está inserido
         const catalogId = el.parentNode.getAttribute('backendId');
 
-        // recupera texto do card
-        const cardName = el.innerText;
+        // recupera texto do card sem o <span>
+        let cardName = el.innerText;
+        if (cardName.indexOf('<span') !== -1) {
+            cardName = cardName.substring(0, cardName.indexOf('<span'));
+        }
 
         const newEl = document.createElement('div');
         newEl.className = 'add-card editable';
@@ -587,22 +677,18 @@ function deleteHandler(e) {
         deleteCatalog(parent.parentElement.getAttribute('backendId'));
     }
 
+    // apaga projeto
+    if (parent.classList.contains('project')) {
+        deleteProject(parent.parentElement.parentElement.getAttribute('backendId'));
+    }
+
 }
 
 function workspaceUI() {
-    const main = document.querySelector('#main');
-
-    // const list = new Sortable(main, {
-    //     group: 'list',
-    //     sort: true,
-    //     filter: '.add-card',
-    //     draggable: '.list',
-    //     ghostClass: "ghost",
-    //     dragoverBubble: true,
-    // });
 
     initCard();
     initCatalog();
+    initProject()
 
     const inputs = document.querySelectorAll('textarea');
 
@@ -623,9 +709,13 @@ function workspaceUI() {
 
 $(function () {
     $('#createProject').click(() => insertProject());
-});
+    $("#returnButton").click(() => window.location.href = 'list_workspace.html');
+})
+
+// controla a mensagem que será exibida a cada alteração do usuário
+let lastAction = null;
 
 // Obtem o valor do parâmetro 'id'
-const workspaceId = sessionStorage.getItem("workspaceId");
+const workspaceId = localStorage.getItem("workspaceId");
 stompClient.activate();
 

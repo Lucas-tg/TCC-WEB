@@ -24,7 +24,11 @@ stompClient.onConnect = (frame) => {
         .then(json => {
             showWorkspaces(json);
         })
-        .catch(error => console.log('error', error));
+        .catch(error => {
+            console.log('error', error);
+            alert('Sessão fechada, realize o login novamente!');
+            leavePage();
+        });
 
     const socketSub = `/topic/user/${userId}/workspace.list`;
     stompClient.subscribe(socketSub, (user) => {
@@ -219,13 +223,19 @@ function showWorkspaces(user) {
 }
 
 function goToWorkspacePage(event, workspaceId) {
-    sessionStorage.setItem("workspaceId", workspaceId);
+    localStorage.setItem("workspaceId", workspaceId);
     window.location.href = 'workspace.html';
+}
+
+function leavePage() {
+    localStorage.clear();
+    window.location.href = 'login.html';
 }
 
 $(function () {
     $("#workspaceInsert").click(() => insertWorkspace());
+    $("#returnButton").click(() => leavePage());
 });
 
-const userId = sessionStorage.getItem("userId");
+const userId = localStorage.getItem("userId");
 stompClient.activate();

@@ -22,7 +22,7 @@
 	      integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
 
 	<link rel="stylesheet" href="../css/workspace.css">
-	<script type="text/javascript" src="../js/workspace/workspace.js"></script>
+	<script type="text/javascript" src="../js/workspace.js"></script>
 </head>
 
 <body style="padding-top: 70px;">
@@ -37,15 +37,18 @@
 				<span class="navbar-toggler-icon"></span>
 			</button>
 			<div class="collapse navbar-collapse" id="navbarSupportedContent">
+				<button id="returnButton" type="button" class="btn btn-primary" data-bs-target="#exampleModal">
+					Página Inicial
+				</button>
 				<ul class="navbar-nav me-auto mb-2 mb-lg-0"></ul>
-				<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createProjectModal">
+				<button id="openCreateProject" type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createProjectModal">
 					Criar Novo Projeto
 				</button>
 			</div>
 		</div>
 	</nav>
 
-	<div id="alert" class="alert alert-success" style="display: none;"></div>
+	<div id="userAlert" class="alert alert-success" style="display: none;"></div>
 
 	<!-- Modal Criar Projeto -->
 	<div class="modal fade" id="createProjectModal" tabindex="-1" aria-labelledby="createProjectModalLabel" aria-hidden="true">
