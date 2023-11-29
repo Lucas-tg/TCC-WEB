@@ -223,8 +223,9 @@ function goToWorkspacePage(event, workspaceId) {
     window.location.href = 'workspace.html';
 }
 
-$(function () {
+$(function () {returnButton
     $("#workspaceInsert").click(() => insertWorkspace());
+    $("#returnButton").click(() => window.location.href = 'login.html');
 });
 
 const userId = localStorage.getItem("userId");

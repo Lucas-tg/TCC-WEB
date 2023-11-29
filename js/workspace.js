@@ -709,6 +709,7 @@ function workspaceUI() {
 
 $(function () {
     $('#createProject').click(() => insertProject());
+    $("#returnButton").click(() => window.location.href = 'list_workspace.html');
 })
 
 // controla a mensagem que será exibida a cada alteração do usuário

@@ -31,4 +31,5 @@ function user_register() {
 
 $(function () {
     $('#submit_user_registration').click(() => user_register());
+    $("#returnButton").click(() => window.location.href = 'login.html');
 });
