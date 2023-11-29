@@ -707,6 +707,11 @@ function workspaceUI() {
     });
 }
 
+function leavePage() {
+    localStorage.clear();
+    window.location.href = 'list_workspace.html';
+}
+
 $(function () {
     $('#createProject').click(() => insertProject());
     $("#returnButton").click(() => window.location.href = 'list_workspace.html');
@@ -717,5 +722,11 @@ let lastAction = null;
 
 // Obtem o valor do parâmetro 'id'
 const workspaceId = localStorage.getItem("workspaceId");
-stompClient.activate();
+
+if (workspaceId == null){
+    alert("Falha ao recuperar workspace");
+    leavePage();
+} else {
+    stompClient.activate();
+}
 

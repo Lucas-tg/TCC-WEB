@@ -24,11 +24,7 @@ stompClient.onConnect = (frame) => {
         .then(json => {
             showWorkspaces(json);
         })
-        .catch(error => {
-            console.log('error', error);
-            alert('Sessão fechada, realize o login novamente!');
-            leavePage();
-        });
+        .catch(error => console.log('error', error));
 
     const socketSub = `/topic/user/${userId}/workspace.list`;
     stompClient.subscribe(socketSub, (user) => {
@@ -84,9 +80,12 @@ function addUserWorkspace(workspaceId, email) {
     fetch(`http://localhost:8082/users/${email}`, requestOptions)
         .then(response => response.json())
         .then(json => {
-            console.log("AQUI")
-            const dest = `/app/user.add/${json.id}/workspace/${workspaceId}`;
-            socketPub(dest, null);
+            if(json.id == null){
+                alert('Usuário não encontrado!');
+            } else {
+                const dest = `/app/user.add/${json.id}/workspace/${workspaceId}`;
+                socketPub(dest, null);
+            }
         })
         .catch(error => console.log('error', error));
 }
@@ -146,7 +145,6 @@ function showWorkspaces(user) {
             const addUserIcons = document.querySelectorAll('.addUserIcon');
             addUserIcons.forEach(icon => {
                 icon.addEventListener('click', function () {
-                    console.log("entrou user");
 
                     // Obtém o ID do elemento clicado
                     const rowId = this.getAttribute('data-row-id');
@@ -178,7 +176,6 @@ function showWorkspaces(user) {
             const editIcons = document.querySelectorAll('.pencilIcon');
             editIcons.forEach(icon => {
                 icon.addEventListener('click', function () {
-                    console.log("entrou caneta");
 
                     // Obtém o ID do elemento clicado
                     const rowId = this.getAttribute('data-row-id');
@@ -238,4 +235,10 @@ $(function () {
 });
 
 const userId = localStorage.getItem("userId");
-stompClient.activate();
+
+if (userId == null){
+    alert('Sessão fechada, realize o login novamente!');
+    leavePage();
+} else {
+    stompClient.activate();
+}

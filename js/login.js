@@ -18,15 +18,14 @@ function login() {
         .then(response => response.json())
         .then(json => {
             const userId = json.id;
-            if (userId != null) {
+            if (userId == null) {
+                userAlert('Falha ao realizar o login');
+            } else {
                 localStorage.setItem("userId", userId);
                 window.location.href = 'list_workspace.html';
             }
         })
-        .catch(error => {
-            console.log('error', error);
-            userAlert('Falha ao realizar o login');
-        });
+        .catch(error => console.log('error', error));
 }
 
 function userAlert(message) {
