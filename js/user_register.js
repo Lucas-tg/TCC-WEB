@@ -1,3 +1,14 @@
+function userAlert(message) {
+    $(`#userAlert`).text(message);
+    // Mostrar a mensagem de sucesso
+    document.getElementById('userAlert').style.display = 'block';
+
+    // Ocultar a mensagem de sucesso após 3 segundos (3000 milissegundos)
+    setTimeout(function () {
+        document.getElementById('userAlert').style.display = 'none';
+    }, 3000); // 3 segundos (3000 ms)
+}
+
 function user_register() {
 
     let obj = {
@@ -20,7 +31,9 @@ function user_register() {
         .then(response => response.json())
         .then(json => {
             const userId = json.id;
-            if (userId != null) {
+            if (userId == null) {
+                userAlert('Falha ao realizar o cadastro');
+            } else {
                 localStorage.setItem("userId", userId);
                 window.location.href = `list_workspace.html`;
             }
