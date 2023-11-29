@@ -219,7 +219,7 @@ function showWorkspaces(user) {
 }
 
 function goToWorkspacePage(event, workspaceId) {
-    sessionStorage.setItem("workspaceId", workspaceId);
+    localStorage.setItem("workspaceId", workspaceId);
     window.location.href = 'workspace.html';
 }
 
@@ -227,5 +227,5 @@ $(function () {
     $("#workspaceInsert").click(() => insertWorkspace());
 });
 
-const userId = sessionStorage.getItem("userId");
+const userId = localStorage.getItem("userId");
 stompClient.activate();

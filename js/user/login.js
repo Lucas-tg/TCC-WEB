@@ -20,7 +20,7 @@ function login() {
         .then(json => {
             const userId = json.id;
             if (userId != null) {
-                sessionStorage.setItem("userId", userId);
+                localStorage.setItem("userId", userId);
                 window.location.href = 'list_workspace.html';
             }
         })

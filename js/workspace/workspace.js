@@ -715,6 +715,6 @@ $(function () {
 let lastAction = null;
 
 // Obtem o valor do parâmetro 'id'
-const workspaceId = sessionStorage.getItem("workspaceId");
+const workspaceId = localStorage.getItem("workspaceId");
 stompClient.activate();
 
