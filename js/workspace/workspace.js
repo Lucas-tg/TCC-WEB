@@ -16,7 +16,7 @@ stompClient.onStompError = (frame) => {
 stompClient.onConnect = (frame) => {
     console.log(`Connected: ${frame}`);
 
-    var requestOptions = {
+    const requestOptions = {
         method: 'GET', redirect: 'follow'
     };
 
@@ -192,7 +192,7 @@ function showProjects(projects) {
         });
 
         // remove projetos que sobraram
-        var idRemove = $(`#projects`).children().length;
+        let idRemove = $(`#projects`).children().length;
         while (idRemove > projectsCount) {
             console.log("REMOVE: " + $(`#project_${idRemove}`).text());
             $(`#project_${idRemove}`).remove();
@@ -211,7 +211,7 @@ function showCatalogs(catalogs, workspacePosition) {
             position++;
         });
 
-    var catalogsCount = catalogs.length;
+    const catalogsCount = catalogs.length;
 
     catalogs.sort(function (a, b) {
         return a.projectPosition - b.projectPosition;
@@ -262,7 +262,7 @@ function showCards(cards, workspacePosition, projectPosition) {
             position++;
         });
 
-    var cardsCount = cards.length;
+    const cardsCount = cards.length;
 
     cards.sort(function (a, b) {
         return a.catalogPosition - b.catalogPosition;
@@ -318,11 +318,15 @@ function initCatalog() {
                     id++;
                 }
 
-                console.log(event.item);
+                // recupera o nome sem o <span>
+                let catalogName = event.item.querySelector('#name_catalog').innerHTML;
+                if (catalogName.indexOf('<span') !== -1) {
+                    catalogName = catalogName.substring(0, catalogName.indexOf('<span'));
+                }
 
                 let catalog = {
                     'id': event.item.getAttribute('backendId'),
-                    'name': event.item.querySelector('#name_catalog').innerHTML,
+                    'name': catalogName,
                     'description': '',
                     'idProject': $(`#project_${newProjectPosition}`).attr('backendId'),
                     'projectPosition': newPosition
@@ -360,9 +364,16 @@ function initCard() {
                 }
 
                 event.item.setAttribute('id', `card_${newPosition}`);
+
+                // recupera o nome sem o <span>
+                let cardName = event.item.innerHTML;
+                if (cardName.indexOf('<span') !== -1) {
+                    cardName = cardName.substring(0, cardName.indexOf('<span'));
+                }
+
                 let card = {
                     'id': event.item.getAttribute('backendId'),
-                    'name': event.item.innerHTML,
+                    'name': cardName,
                     'description': '',
                     'idCatalog': $(`#project_${newProjectPosition} #list_catalog #catalog_${newCatalogPosition}`).attr('backendId'),
                     'catalogPosition': newPosition
@@ -419,11 +430,20 @@ function elKeypressHandler(e) {
         e.target.blur();
 
         let backendId = e.target.getAttribute('backendId');
+
         // atualiza nome do cartão
         if (e.target.classList.contains('card') && backendId != null) {
+
+
+            // recupera o nome sem o <span>
+            let cardName = e.target.innerHTML;
+            if (cardName.indexOf('<span') !== -1) {
+                cardName = cardName.substring(0, cardName.indexOf('<span'));
+            }
+
             let card = {
                 'id': backendId,
-                'name': e.target.innerHTML,
+                'name': cardName,
                 'description': '',
                 'idCatalog': e.target.parentElement.parentElement.getAttribute('backendId'),
                 'catalogPosition': e.target.id.substring(5)
@@ -434,9 +454,16 @@ function elKeypressHandler(e) {
         // atualiza nome do catálogo
         backendId = e.target.parentElement.getAttribute('backendId');
         if (e.target.id === 'name_catalog' && backendId != null) {
+
+            // recupera o nome sem o <span>
+            let catalogName = e.target.innerHTML;
+            if (catalogName.indexOf('<span') !== -1) {
+                catalogName = catalogName.substring(0, catalogName.indexOf('<span'));
+            }
+
             let catalog = {
                 'id': backendId,
-                'name': e.target.innerHTML,
+                'name': catalogName,
                 'description': '',
                 'idProject': e.target.parentElement.parentElement.parentElement.getAttribute('backendId'),
                 'projectPosition': e.target.parentElement.id.substring(8)
@@ -482,8 +509,11 @@ function elBlurHandler(e) {
         // recupera catalogId que o card está inserido
         const catalogId = el.parentNode.getAttribute('backendId');
 
-        // recupera texto do card
-        const cardName = el.innerText;
+        // recupera texto do card sem o <span>
+        let cardName = el.innerText;
+        if (cardName.indexOf('<span') !== -1) {
+            cardName = cardName.substring(0, cardName.indexOf('<span'));
+        }
 
         const newEl = document.createElement('div');
         newEl.className = 'add-card editable';
@@ -590,7 +620,7 @@ function deleteHandler(e) {
 }
 
 function workspaceUI() {
-    const main = document.querySelector('#main');
+    // const main = document.querySelector('#main');
 
     // const list = new Sortable(main, {
     //     group: 'list',
