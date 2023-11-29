@@ -4,13 +4,13 @@ const stompClient = new StompJs.Client({
 
 stompClient.onWebSocketError = (error) => {
     console.error('Error with websocket', error);
-    alert("Problema de conexão");
+    userAlert("Problema de conexão");
 };
 
 stompClient.onStompError = (frame) => {
     console.error(`Broker reported error: ${frame.headers['message']}`);
     console.error(`Additional details: ${frame.body}`);
-    alert("Problema de conexão");
+    userAlert("Problema de conexão");
 };
 
 stompClient.onConnect = (frame) => {
@@ -34,7 +34,7 @@ stompClient.onConnect = (frame) => {
         console.log(`RESPONSE FROM: ${socketSub}`);
         showWorkspace(JSON.parse(workspace.body));
         if (lastAction != null) {
-            alert(lastAction);
+            userAlert(lastAction);
             lastAction = null;
         }
         // habilita interação do usuário
@@ -47,14 +47,14 @@ stompClient.onConnect = (frame) => {
     console.log(`SUBSCRIBED: ${socketSub}`);
 };
 
-function alert(message) {
-    $(`#alert`).text(message);
+function userAlert(message) {
+    $(`#userAlert`).text(message);
     // Mostrar a mensagem de sucesso
-    document.getElementById('alert').style.display = 'block';
+    document.getElementById('userAlert').style.display = 'block';
 
     // Ocultar a mensagem de sucesso após 3 segundos (3000 milissegundos)
     setTimeout(function () {
-        document.getElementById('alert').style.display = 'none';
+        document.getElementById('userAlert').style.display = 'none';
     }, 3000); // 3 segundos (3000 ms)
 }
 

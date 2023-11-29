@@ -14,7 +14,6 @@ function login() {
         body: JSON.stringify(obj)
     };
 
-
     fetch("http://localhost:8082/users/login", requestOptions)
         .then(response => response.json())
         .then(json => {
@@ -24,7 +23,21 @@ function login() {
                 window.location.href = 'list_workspace.html';
             }
         })
-        .catch(error => console.log('error', error));
+        .catch(error => {
+            console.log('error', error);
+            userAlert('Falha ao realizar o login');
+        });
+}
+
+function userAlert(message) {
+    $(`#userAlert`).text(message);
+    // Mostrar a mensagem de sucesso
+    document.getElementById('userAlert').style.display = 'block';
+
+    // Ocultar a mensagem de sucesso após 3 segundos (3000 milissegundos)
+    setTimeout(function () {
+        document.getElementById('userAlert').style.display = 'none';
+    }, 3000); // 3 segundos (3000 ms)
 }
 
 function register() {
